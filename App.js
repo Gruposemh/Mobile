@@ -16,7 +16,7 @@ import SaibaMais from "./screens/SaibaMais";
 import VerMais from "./screens/VerMais";
 import DoacaoDinheiro from "./screens/DoacaoDinheiro";
 import DoacaoMateriais from "./screens/DoacaoMateriais";
-import Menu from "./screens/Menu";
+import Menu from "./components/Menu";
 import Perfil from "./screens/Perfil";
 import EditarPerfil from "./screens/EditarPerfil";
 import Notificacoes from "./screens/Notificacoes";
@@ -56,7 +56,6 @@ export default function App() {
         <Pilha.Screen name="VerMais" component={VerMais} />
         <Pilha.Screen name="DoacaoDinheiro" component={DoacaoDinheiro} />
         <Pilha.Screen name="DoacaoMateriais" component={DoacaoMateriais} />
-        <Pilha.Screen name="Menu" component={Menu} />
         <Pilha.Screen name="Perfil" component={Perfil} />
         <Pilha.Screen name="EditarPerfil" component={EditarPerfil} />
         <Pilha.Screen name="Notificacoes" component={Notificacoes} />

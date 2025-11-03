@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   View, 
   StyleSheet, 
@@ -20,6 +20,37 @@ const CadastrarUsuario = ({ navigation }) => {
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
 
+  // Função para criar admin se não existir
+  const criarAdmin = async () => {
+    try {
+      const usuariosJSON = await AsyncStorage.getItem("usuarios");
+      const usuarios = usuariosJSON ? JSON.parse(usuariosJSON) : [];
+
+      const adminExistente = usuarios.find(u => u.email === "admin@ong.com");
+
+      if (!adminExistente) {
+        const admin = {
+          nome: "Administrador",
+          email: "admin@ong.com",
+          cpf: "00000000000",
+          telefone: "00000000000",
+          senha: "admin123",
+          role: "ADMIN",
+        };
+
+        usuarios.push(admin);
+        await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível criar o administrador.");
+    }
+  };
+
+  // Cria admin assim que o componente carrega
+  useEffect(() => {
+    criarAdmin();
+  }, []);
+
   const handleCriar = async () => {
     if (!nome || !email || !cpf || !telefone || !senha) {
       Alert.alert("Campos obrigatórios", "Por favor, preencha todos os campos.");
@@ -36,20 +67,16 @@ const CadastrarUsuario = ({ navigation }) => {
         return;
       }
 
-      const novoUsuario = { nome, email, cpf, telefone, senha };
+      const novoUsuario = { nome, email, cpf, telefone, senha, role: "USER" };
       usuarios.push(novoUsuario);
 
-      // Salva lista de usuários
       await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
-
-      // Também salva o usuário logado atual
       await AsyncStorage.setItem("usuario", JSON.stringify(novoUsuario));
 
       Alert.alert("Sucesso!", "Usuário cadastrado com sucesso!");
       navigation.navigate("Home");
     } catch (error) {
       Alert.alert("Erro", "Não foi possível salvar o usuário.");
-      console.error(error);
     }
   };
 

@@ -1,34 +1,46 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, ImageBackground } from "react-native";
-import MenuModal from "./Menu"; // Importando o Modal de Menu
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ImageBackground,
+} from "react-native";
+import MenuModal from "../components/Menu"; // Importando o Modal de Menu
 
 const Home = ({ navigation }) => {
-
   const [isModalVisible, setModalVisible] = useState(false);
 
   const toggleModal = () => {
+    console.log(" Alternando menu. Visível?", !isModalVisible);
     setModalVisible(!isModalVisible);
   };
 
   const handleSaibaMais = () => {
+    console.log(" Navegando para: SaibaMais");
     navigation.navigate("SaibaMais");
   };
 
   const handleVerMais = () => {
+    console.log("Navegando para: VerMais");
     navigation.navigate("VerMais");
   };
 
   const handleDoacaoDinheiro = () => {
+    console.log(" Navegando para: DoacaoDinheiro");
     navigation.navigate("DoacaoDinheiro");
   };
 
   const handleDoacaoMateriais = () => {
+    console.log("🧭 Navegando para: DoacaoMateriais");
     navigation.navigate("DoacaoMateriais");
   };
 
-
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleModal}>
           <Image
@@ -44,6 +56,7 @@ const Home = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
+      {/* CONTEÚDO PRINCIPAL */}
       <View style={styles.content}>
         <Text style={styles.title}>Bem vindo(a)!!</Text>
         <Text style={styles.titleDois}>
@@ -56,7 +69,10 @@ const Home = ({ navigation }) => {
             <Text style={styles.textoSaiba}>Saiba Mais</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.botaoAgenda} onPress={() => console.log("Minha agenda clicada")}>
+          <TouchableOpacity
+            style={styles.botaoAgenda}
+            onPress={() => console.log("🗓️ Minha agenda clicada")}
+          >
             <Text style={styles.textoAgenda}>Minha agenda</Text>
           </TouchableOpacity>
         </View>
@@ -64,6 +80,7 @@ const Home = ({ navigation }) => {
         <View style={styles.linha} />
       </View>
 
+      {/* EVENTOS */}
       <View style={styles.eventosContainer}>
         <Text style={styles.evca}>Eventos e campanhas</Text>
 
@@ -107,7 +124,8 @@ const Home = ({ navigation }) => {
           <Text style={styles.textoVermais}>Ver mais...</Text>
         </TouchableOpacity>
 
-        <Text style={styles.evca}>Faça uma doação </Text>
+        {/* DOAÇÕES */}
+        <Text style={styles.evca}>Faça uma doação</Text>
         <View style={styles.doacoes}>
           <TouchableOpacity onPress={handleDoacaoDinheiro}>
             <Image
@@ -127,7 +145,7 @@ const Home = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Menu Modal */}
+      {/* MENU MODAL */}
       <MenuModal visible={isModalVisible} onClose={toggleModal} />
     </ScrollView>
   );
@@ -249,12 +267,10 @@ const styles = StyleSheet.create({
     fontFamily: "NunitoSans-Light",
     textDecorationLine: "underline",
   },
-
   doacoes: {
     justifyContent: "center",
     alignItems: "center",
   },
-
   foto: {
     marginTop: 20,
     marginBottom: 100,
