@@ -8,32 +8,23 @@ import {
   ScrollView,
 } from 'react-native';
 import MenuModal from "../components/Menu"; 
-const VerMais = ({ navigation }) => {  
-  const [isModalVisible, setModalVisible] = useState(false);
-         const toggleModal = () => {
-        console.log(" Alternando menu. Visível?", !isModalVisible);
-        setModalVisible(!isModalVisible);
-      };
-      const handleDoacaoDinheiro = () => {
-      navigation.navigate("DoacaoDinheiro");
-        }; 
-        const handleDoacaoMateriais = () => {
-      navigation.navigate("DoacaoMateriais");
-      };
-   const handleMinhaAgenda = () => {
-    console.log(" Navegando para: minha agenda");
-    navigation.navigate("MinhaAgenda");
-  };
+const MinhaAgenda = ({ navigation }) => {  
+    const [isModalVisible, setModalVisible] = useState(false);
+     const toggleModal = () => {
+    console.log(" Alternando menu. Visível?", !isModalVisible);
+    setModalVisible(!isModalVisible);
+  };
+
 return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
  
       <View style={styles.header}>
-       <TouchableOpacity onPress={toggleModal}>
-                               <Image
-                                 source={require("../assets/images/Menu.png")}
-                                 style={styles.icon}
-                               />
-                             </TouchableOpacity>
+        <TouchableOpacity onPress={toggleModal}>
+                 <Image
+                   source={require("../assets/images/Menu.png")}
+                   style={styles.icon}
+                 />
+               </TouchableOpacity>
       
          <TouchableOpacity onPress={() => navigation.navigate("Perfil")}>
           <Image
@@ -44,31 +35,32 @@ return (
            
       </View>
          <View style={styles.content}>
-                <Text style={styles.title}>Participe!!</Text>
+                <Text style={styles.title}>Não perca a data!!!</Text>
                 <Text style={styles.titleDois}>
-                  Toda ação tem {"\n"}um propósito.
+                  Veja aqui os eventos que você se inscreveu !
                 </Text>
-                  <View style={styles.botoes}>
-                          <TouchableOpacity
-                            style={styles.botaoAgenda}
-                           onPress={handleMinhaAgenda}
-                          >
-                            <Text style={styles.textoAgenda}>Minha agenda</Text>
-                          </TouchableOpacity>
-                        </View>
+                  
                         </View>
        <View style={styles.linha} />
+       <View style={styles.botoes}>
+                          <TouchableOpacity
+                            style={styles.botaoAgenda}
+                            onPress={() => console.log("Minha agenda clicada")}
+                          >
+                            <Text style={styles.textoAgenda}>Outros eventos</Text>
+                          </TouchableOpacity>
+                        </View>
 
-     
-         <MenuModal visible={isModalVisible} onClose={toggleModal} />
+          
+        <MenuModal visible={isModalVisible} onClose={toggleModal} />
        </ScrollView>
        
-
+    
         );
 };
 
-       export default VerMais;
-
+       export default MinhaAgenda;
+      
 
 const styles = StyleSheet.create({
       container: {
@@ -111,22 +103,27 @@ const styles = StyleSheet.create({
     marginLeft: 21,
     fontFamily: "Raleway-Bold",
   },
-   botaoAgenda: {
-    backgroundColor: "#B20000",
+    botaoAgenda: {
+    backgroundColor: "#fff",
     width: 118,
     height: 36,
+    marginLeft: 17,
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 15,
-    marginLeft: 20,
+    borderWidth: 2,
+    borderColor: "#b20000",
   },
   textoAgenda: {
     fontSize: 14,
-    color: "white",
-    
-    
+    color: "#b20000",
+    fontFamily: "Raleway-Bold",
   },
+
+  botoes:{
+    marginLeft: "50%",
+    marginTop:50,
+  }
 
 
 });

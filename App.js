@@ -16,11 +16,12 @@ import SaibaMais from "./screens/SaibaMais";
 import VerMais from "./screens/VerMais";
 import DoacaoDinheiro from "./screens/DoacaoDinheiro";
 import DoacaoMateriais from "./screens/DoacaoMateriais";
-import Menu from "./components/Menu";
+import MenuModal from "./components/Menu";
 import Perfil from "./screens/Perfil";
 import EditarPerfil from "./screens/EditarPerfil";
 import Notificacoes from "./screens/Notificacoes";
 import Informacoes from "./screens/Informacoes";
+import MinhaAgenda from "./screens/MinhaAgenda";
 
 const Pilha = createNativeStackNavigator();
 
@@ -60,6 +61,7 @@ export default function App() {
         <Pilha.Screen name="EditarPerfil" component={EditarPerfil} />
         <Pilha.Screen name="Notificacoes" component={Notificacoes} />
         <Pilha.Screen name="Informacoes" component={Informacoes} />
+        <Pilha.Screen name="MinhaAgenda" component={MinhaAgenda} />
       </Pilha.Navigator>
     </NavigationContainer>
   );

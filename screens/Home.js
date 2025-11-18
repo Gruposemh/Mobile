@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   ImageBackground,
 } from "react-native";
-import MenuModal from "../components/Menu"; // Importando o Modal de Menu
+import MenuModal from "../components/Menu"; 
 
 const Home = ({ navigation }) => {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -17,6 +17,11 @@ const Home = ({ navigation }) => {
     console.log(" Alternando menu. Visível?", !isModalVisible);
     setModalVisible(!isModalVisible);
   };
+
+  const handleMinhaAgenda = () => {
+    console.log(" Navegando para: minha agenda");
+    navigation.navigate("MinhaAgenda");
+  };
 
   const handleSaibaMais = () => {
     console.log(" Navegando para: SaibaMais");
@@ -71,7 +76,7 @@ const Home = ({ navigation }) => {
 
           <TouchableOpacity
             style={styles.botaoAgenda}
-            onPress={() => console.log("🗓️ Minha agenda clicada")}
+            onPress={handleMinhaAgenda}
           >
             <Text style={styles.textoAgenda}>Minha agenda</Text>
           </TouchableOpacity>

@@ -12,7 +12,7 @@ export default function Menu({ visible, onClose }) {
       onClose();
       navigation.navigate(route);
     } catch (err) {
-      console.error("❌ Erro ao navegar:", err);
+      console.error("Erro ao navegar:", err);
     }
   };
 
@@ -31,7 +31,11 @@ export default function Menu({ visible, onClose }) {
           </TouchableOpacity>
 
           <View style={styles.menuItems}>
-            <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigate("Informacoes")}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigate("Home")}>
+              <Text style={styles.menuText}>Home</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigate("SaibaMais")}>
               <Text style={styles.menuText}>Sobre a ONG</Text>
             </TouchableOpacity>
 
@@ -39,7 +43,7 @@ export default function Menu({ visible, onClose }) {
               <Text style={styles.menuText}>Quero doar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigate("Notificacoes")}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => handleNavigate("MinhaAgenda")}>
               <Text style={styles.menuText}>Minha agenda</Text>
             </TouchableOpacity>
 

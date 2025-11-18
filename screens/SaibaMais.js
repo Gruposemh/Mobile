@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from "react";
 import {
   View,
   Image,
@@ -7,25 +7,33 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-
+import MenuModal from "../components/Menu"; 
 const SaibaMais = ({ navigation }) => { 
+  const [isModalVisible, setModalVisible] = useState(false);
+       const toggleModal = () => {
+      console.log(" Alternando menu. Visível?", !isModalVisible);
+      setModalVisible(!isModalVisible);
+    };
     const handleDoacaoDinheiro = () => {
     navigation.navigate("DoacaoDinheiro");
       }; 
       const handleDoacaoMateriais = () => {
     navigation.navigate("DoacaoMateriais");
     };
+      const handleEventos = () => {
+    navigation.navigate("VerMais");
+    };
 
 return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
  
       <View style={styles.header}>
-        <TouchableOpacity>
-          <Image
-            source={require("../assets/images/Menu.png")}
-            style={styles.icon}
-          />
-        </TouchableOpacity>
+        <TouchableOpacity onPress={toggleModal}>
+                        <Image
+                          source={require("../assets/images/Menu.png")}
+                          style={styles.icon}
+                        />
+                      </TouchableOpacity>
        <View style= {styles.headerMeio}>
          <Image
             source={require("../assets/images/logoOng.png")}
@@ -68,14 +76,16 @@ return (
                            />
                            </TouchableOpacity>
                            
-                    <Image
-                            source={require('../assets/images/Component 26.png')}
+                   <TouchableOpacity onPress={handleEventos}>
+                     <Image
+                        source={require('../assets/images/Component 26.png')}
                             style={styles.ultima}
                             resizeMode="contain"
-                          />
+                           />
+                           </TouchableOpacity>
                  </View>
       </View>
-        
+         <MenuModal visible={isModalVisible} onClose={toggleModal} />
        </ScrollView>
        
 
