@@ -1,10 +1,10 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// IMPORTANTE: Usando back-end local
-// Se estiver testando no Android, use o IP da sua máquina (192.168.15.14)
-// Se estiver testando no iOS ou web, pode usar localhost
-const API_URL = 'http://192.168.15.14:8080';
+// IMPORTANTE: URL do back-end em produção
+// Para desenvolvimento local, use: http://192.168.15.14:8080
+// Para produção, use a URL do Azure
+const API_URL = 'https://ong-a2hzbucweddredb7.brazilsouth-01.azurewebsites.net';
 
 const api = axios.create({
   baseURL: API_URL,

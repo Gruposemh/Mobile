@@ -2,8 +2,8 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { Platform, Linking } from 'react-native';
 
-// URL da API - deve ser o mesmo IP do api.js
-const API_URL = 'http://192.168.15.14:8080';
+// URL da API - deve ser a mesma do api.js
+const API_URL = 'https://ong-a2hzbucweddredb7.brazilsouth-01.azurewebsites.net';
 
 // Necessário para fechar o navegador após o login
 WebBrowser.maybeCompleteAuthSession();
@@ -27,85 +27,38 @@ export const loginWithGoogle = async () => {
     
     console.log('🌐 URL de autenticação:', authUrl);
     
-    // Criar redirect URI dinamicamente
-    const redirectUri = AuthSession.makeRedirectUri({
-      path: 'oauth2/callback'
-    });
+    // Criar redirect URI usando o scheme do app
+    const redirectUri = 'voluntariosprobem://oauth2/callback';
     
     console.log('🔗 Redirect URI:', redirectUri);
     
-    // Tentar abrir o navegador
-    let result;
-    
-    try {
-      // Para Android, usar browserPackage pode ajudar
-      const browserOptions = Platform.OS === 'android' 
-        ? { 
-            showTitle: true,
-            enableBarCollapsing: false,
-            // Forçar uso do Chrome se disponível
-            browserPackage: 'com.android.chrome'
-          }
-        : {};
-      
-      result = await WebBrowser.openAuthSessionAsync(
-        authUrl,
-        redirectUri,
-        browserOptions
-      );
-    } catch (browserError) {
-      console.error('❌ Erro ao abrir navegador:', browserError);
-      
-      // Fallback: tentar abrir URL diretamente
-      if (Platform.OS === 'android') {
-        console.log('🔄 Tentando abrir URL diretamente...');
-        const canOpen = await Linking.canOpenURL(authUrl);
-        if (canOpen) {
-          await Linking.openURL(authUrl);
-          return {
-            success: false,
-            message: 'Por favor, complete o login no navegador e volte ao app'
-          };
-        }
+    // Abrir navegador com configurações otimizadas
+    const result = await WebBrowser.openAuthSessionAsync(
+      authUrl,
+      redirectUri,
+      {
+        // Mostrar título do navegador
+        showTitle: false,
+        // Não criar nova tarefa no Android
+        createTask: false,
+        // Tentar fechar automaticamente
+        dismissButtonStyle: 'close',
       }
-      
-      throw browserError;
-    }
+    );
     
     console.log('📱 Resultado do navegador:', result);
     
-    if (result.type === 'success') {
-      // Extrair parâmetros da URL de callback
-      const url = result.url;
-      const params = new URLSearchParams(url.split('?')[1]);
-      
-      const token = params.get('token');
-      const refreshToken = params.get('refreshToken');
-      const email = params.get('email');
-      const role = params.get('role');
-      const id = params.get('id');
-      const nome = params.get('nome');
-      
-      if (token && refreshToken && email) {
-        console.log('✅ Login com Google bem-sucedido!');
-        return {
-          success: true,
-          data: {
-            token,
-            refreshToken,
-            email,
-            role,
-            id: parseInt(id),
-            nome: decodeURIComponent(nome)
-          }
-        };
-      } else {
-        console.error('❌ Tokens não encontrados na resposta');
-        return {
-          success: false,
-          message: 'Erro ao processar resposta do servidor'
-        };
-      }
+    // O resultado pode ser 'dismiss' quando o deep link funciona
+    // porque o navegador fecha automaticamente
+    if (result.type === 'success' || result.type === 'dismiss') {
+      console.log('⏳ Aguardando deep link...');
+      // O App.js vai capturar o deep link e fazer o login
+      // Retornar sucesso parcial para não mostrar erro
+      return {
+        success: false,
+        message: 'Aguardando retorno do navegador...',
+        waiting: true
+      };
     } else if (result.type === 'cancel') {
       console.log('⚠️ Login cancelado pelo usuário');
       return {

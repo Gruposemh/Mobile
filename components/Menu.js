@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "../context/AuthContext";
 import ModalEmDesenvolvimento from "./ModalEmDesenvolvimento";
 
 export default function Menu({ visible, onClose }) {
   const navigation = useNavigation();
+  const { signOut } = useAuth();
   const [modalDevOpen, setModalDevOpen] = useState(false);
 
   const handleNavigate = (route) => {
@@ -26,9 +28,26 @@ export default function Menu({ visible, onClose }) {
   };
 
   const handleLogout = () => {
-    console.log("🚪 Fazendo logout e voltando para Login");
-    onClose();
-    navigation.navigate("Login");
+    Alert.alert(
+      "Sair da conta",
+      "Tem certeza que deseja sair?",
+      [
+        {
+          text: "Cancelar",
+          style: "cancel"
+        },
+        {
+          text: "Sair",
+          style: "destructive",
+          onPress: async () => {
+            console.log("🚪 Fazendo logout...");
+            onClose();
+            await signOut();
+            console.log("✅ Logout concluído");
+          }
+        }
+      ]
+    );
   };
 
   return (

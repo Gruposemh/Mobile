@@ -98,6 +98,13 @@ const Login = ({ navigation }) => {
       console.log('Login com Google concluído');
       showToast("Login realizado com sucesso!", "success");
       setLoading(false);
+    } else if (result.waiting) {
+      // Aguardando deep link - não mostrar erro
+      console.log('⏳ Aguardando retorno do navegador...');
+      // Manter loading por mais tempo
+      setTimeout(() => {
+        setLoading(false);
+      }, 3000);
     } else {
       setLoading(false);
       showToast(result.message || "Erro ao fazer login com Google", "error");

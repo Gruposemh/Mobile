@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useFonts } from "expo-font";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, View, Linking } from "react-native";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import * as WebBrowser from 'expo-web-browser';
 
 import TelaInicio from "./screens/TelaInicio";
 import TelaInicioDois from "./screens/TelaInicioDois";
@@ -29,7 +30,79 @@ import Atividades from "./screens/Atividades";
 const Pilha = createNativeStackNavigator();
 
 function AppNavigator() {
-  const { signed, loading } = useAuth();
+  const { signed, loading, signIn } = useAuth();
+
+  // Configurar listener para deep links do OAuth2
+  useEffect(() => {
+    // Fechar qualquer sessão de autenticação pendente
+    WebBrowser.maybeCompleteAuthSession();
+
+    // Listener para deep links
+    const handleDeepLink = async (event) => {
+      const url = event.url;
+      console.log('🔗 Deep link recebido:', url);
+
+      // Verificar se é callback do OAuth2
+      if (url.includes('oauth2/callback')) {
+        try {
+          // Extrair parâmetros da URL
+          const params = new URLSearchParams(url.split('?')[1]);
+          
+          const token = params.get('token');
+          const refreshToken = params.get('refreshToken');
+          const email = params.get('email');
+          const role = params.get('role');
+          const id = params.get('id');
+          const nome = params.get('nome');
+
+          console.log('📦 Dados recebidos do OAuth2:', { 
+            token: token?.substring(0, 20) + '...', 
+            email, 
+            role, 
+            id, 
+            nome: nome ? decodeURIComponent(nome) : 'N/A'
+          });
+
+          if (token && refreshToken && email) {
+            const userData = {
+              id: parseInt(id),
+              nome: nome ? decodeURIComponent(nome) : email.split('@')[0],
+              email: email,
+              role: role,
+            };
+
+            console.log('✅ Fazendo login com dados do Google...');
+            
+            // Fechar o navegador se ainda estiver aberto
+            WebBrowser.dismissBrowser();
+            
+            await signIn(token, refreshToken, userData);
+            console.log('✅ Login com Google concluído!');
+          } else {
+            console.error('❌ Dados incompletos no deep link');
+            console.error('Token:', !!token, 'RefreshToken:', !!refreshToken, 'Email:', !!email);
+          }
+        } catch (error) {
+          console.error('❌ Erro ao processar deep link:', error);
+        }
+      }
+    };
+
+    // Verificar se o app foi aberto via deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        console.log('🔗 App aberto via deep link:', url);
+        handleDeepLink({ url });
+      }
+    });
+
+    // Adicionar listener para deep links enquanto o app está aberto
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [signIn]);
 
   if (loading) {
     return (
@@ -40,7 +113,17 @@ function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      linking={{
+        prefixes: ['voluntariosprobem://', 'exp://'],
+        config: {
+          screens: {
+            Home: 'home',
+            Login: 'login',
+          },
+        },
+      }}
+    >
       <Pilha.Navigator
         initialRouteName={signed ? "Home" : "Inicio"}
         screenOptions={{ headerShown: false }}
