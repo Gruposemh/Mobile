@@ -1,29 +1,91 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet, Alert, Image, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet, Image, KeyboardAvoidingView, TextInput, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { requestPasswordReset, resetPassword } from '../services/authService';
+import Toast from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 
-const RecuperacaoSenha = ({ navigation }) => {  // Aqui adicionamos o 'navigation' como parâmetro
-  const [metodoRecuperacao, setMetodoRecuperacao] = useState('');
+const RecuperacaoSenha = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [codigo, setCodigo] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [etapa, setEtapa] = useState('email'); // 'email', 'codigo', 'senha'
+  const [loading, setLoading] = useState(false);
+  const [mostrarNovaSenha, setMostrarNovaSenha] = useState(false);
+  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   const handleCancelar = () => {
     navigation.goBack();
   };
 
-  const handleConfirmar = () => {
-    if (!metodoRecuperacao) { 
-      Alert.alert("Erro", "Por favor, escolha um método de recuperação (SMS ou Email).");
+  const handleSolicitarCodigo = async () => {
+    if (!email || !email.includes('@')) { 
+      showToast("Por favor, insira um email válido.", "error");
       return;
     }
 
-  
-    if (metodoRecuperacao === 'SMS') {
-      navigation.navigate('TelaSMS'); 
-    } else if (metodoRecuperacao === 'Email') {
-      navigation.navigate('TelaEmail');  
+    setLoading(true);
+    const result = await requestPasswordReset(email);
+    setLoading(false);
+
+    if (result.success) {
+      showToast("Código enviado! Verifique seu email.", "success");
+      setTimeout(() => setEtapa('codigo'), 1000);
+    } else {
+      showToast(result.message, "error");
+    }
+  };
+
+  const handleVerificarCodigo = (codigoParam) => {
+    const codigoFinal = codigoParam || codigo;
+    
+    if (codigoFinal.length !== 6) {
+      return;
+    }
+    setEtapa('senha');
+  };
+
+  const handleCodigoChange = (text) => {
+    setCodigo(text);
+    // Avançar automaticamente quando atingir 6 dígitos
+    if (text.length === 6) {
+      handleVerificarCodigo(text);
+    }
+  };
+
+  const handleRedefinirSenha = async () => {
+    if (!novaSenha || novaSenha.length < 6) {
+      showToast("A senha deve ter no mínimo 6 caracteres.", "error");
+      return;
+    }
+
+    if (novaSenha !== confirmarSenha) {
+      showToast("As senhas não coincidem.", "error");
+      return;
+    }
+
+    setLoading(true);
+    const result = await resetPassword(email, codigo, novaSenha);
+    setLoading(false);
+
+    if (result.success) {
+      showToast("Senha alterada com sucesso!", "success");
+      setTimeout(() => navigation.navigate("Login"), 1500);
+    } else {
+      showToast(result.message, "error");
     }
   };
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.container}>
 
@@ -40,37 +102,120 @@ const RecuperacaoSenha = ({ navigation }) => {  // Aqui adicionamos o 'navigatio
           />
 
           <Text style={styles.titulo}>Recuperação de senha</Text>
-          <Text style={styles.subtitulo}>Como você gostaria de recuperar sua senha?</Text>
+          
+          {etapa === 'email' && (
+            <>
+              <Text style={styles.subtitulo}>Digite seu email para receber o código</Text>
 
-          {/* Radio Button SMS */}
-          <TouchableOpacity
-            style={[styles.radioButtonContainer, metodoRecuperacao === 'SMS' && styles.radioButtonContainerSelected]}
-            onPress={() => setMetodoRecuperacao('SMS')}
-          >
-            <View style={styles.radioButton}>
-              {metodoRecuperacao === 'SMS' && <View style={styles.radioButtonSelected} />}
-            </View>
-            <Text style={[styles.radioButtonText, metodoRecuperacao === 'SMS' && styles.radioButtonTextSelected]}>SMS</Text>
-          </TouchableOpacity>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#aaa"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
 
-          {/* Radio Button Email */}
-          <TouchableOpacity
-            style={[styles.radioButtonContainer, metodoRecuperacao === 'Email' && styles.radioButtonContainerSelected]}
-            onPress={() => setMetodoRecuperacao('Email')}
-          >
-            <View style={styles.radioButton}>
-              {metodoRecuperacao === 'Email' && <View style={styles.radioButtonSelected} />}
-            </View>
-            <Text style={[styles.radioButtonText, metodoRecuperacao === 'Email' && styles.radioButtonTextSelected]}>Email</Text>
-          </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.botaoProximo} 
+                onPress={handleSolicitarCodigo}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.textoProximo}>Enviar Código</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
 
-          {/* Botão para confirmar a escolha */}
-          <TouchableOpacity style={styles.botaoProximo} onPress={handleConfirmar}>
-            <Text style={styles.textoProximo}>Próximo</Text>
-          </TouchableOpacity>
+          {etapa === 'codigo' && (
+            <>
+              <Text style={styles.subtitulo}>Digite o código de 6 dígitos enviado para {email}</Text>
+
+              <TextInput
+                style={styles.inputCodigo}
+                placeholder="000000"
+                placeholderTextColor="#aaa"
+                value={codigo}
+                onChangeText={handleCodigoChange}
+                keyboardType="number-pad"
+                maxLength={6}
+              />
+
+              <TouchableOpacity 
+                style={styles.botaoProximo} 
+                onPress={handleVerificarCodigo}
+              >
+                <Text style={styles.textoProximo}>Próximo</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {etapa === 'senha' && (
+            <>
+              <Text style={styles.subtitulo}>Digite sua nova senha</Text>
+
+              <View style={styles.inputSenhaContainer}>
+                <TextInput
+                  style={styles.inputSenha}
+                  placeholder="Nova senha"
+                  placeholderTextColor="#aaa"
+                  value={novaSenha}
+                  onChangeText={setNovaSenha}
+                  secureTextEntry={!mostrarNovaSenha}
+                />
+                <TouchableOpacity 
+                  style={styles.botaoOlho}
+                  onPress={() => setMostrarNovaSenha(!mostrarNovaSenha)}
+                >
+                  <Ionicons 
+                    name={mostrarNovaSenha ? "eye-off-outline" : "eye-outline"} 
+                    size={22} 
+                    color="#666" 
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.inputSenhaContainer}>
+                <TextInput
+                  style={styles.inputSenha}
+                  placeholder="Confirmar senha"
+                  placeholderTextColor="#aaa"
+                  value={confirmarSenha}
+                  onChangeText={setConfirmarSenha}
+                  secureTextEntry={!mostrarConfirmarSenha}
+                />
+                <TouchableOpacity 
+                  style={styles.botaoOlho}
+                  onPress={() => setMostrarConfirmarSenha(!mostrarConfirmarSenha)}
+                >
+                  <Ionicons 
+                    name={mostrarConfirmarSenha ? "eye-off-outline" : "eye-outline"} 
+                    size={22} 
+                    color="#666" 
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.botaoProximo} 
+                onPress={handleRedefinirSenha}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.textoProximo}>Redefinir Senha</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Botão de Cancelar */}
-          <TouchableOpacity onPress={handleCancelar} style={styles.botaoCancelar}>
+          <TouchableOpacity onPress={handleCancelar}>
             <Text style={styles.textoCancelar}>Cancelar</Text>
           </TouchableOpacity>
 
@@ -89,7 +234,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     overflow: "hidden",
   },
-
   fundo3: {
     width: 605,
     left: 160,
@@ -100,7 +244,6 @@ const styles = StyleSheet.create({
     height: 130,
     bottom: 390,
   },
-
   titulo: {
     fontSize: 21,
     fontWeight: 'bold',
@@ -108,60 +251,65 @@ const styles = StyleSheet.create({
     fontFamily: 'Raleway-Bold',
   },
   subtitulo: {
-    fontSize: 19,
-    marginBottom: 20,
+    fontSize: 16,
+    marginBottom: 30,
     bottom: 330,
     textAlign: 'center',
     color: '#000000ff',
     fontFamily: 'NunitoSans-Light',
+    paddingHorizontal: 20,
   },
-  radioButtonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 10,
-    bottom: 320,
-    backgroundColor: '#FFEBEB',
-    width: 210,
-    height: 50,
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    height: 47,
+  input: {
+    backgroundColor: "#f1f1f1",
+    width: "85%",
+    height: 48,
+    borderRadius: 10,
+    fontSize: 15,
+    padding: 10,
+    bottom: 310,
+    marginBottom: 10,
   },
-
-  radioButtonContainerSelected: {
-    backgroundColor: '#F2A4A4',
+  inputSenhaContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f1f1",
+    width: "85%",
+    height: 48,
+    borderRadius: 10,
+    bottom: 310,
+    marginBottom: 10,
   },
-
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 50,
-    borderWidth: 2,
-    backgroundColor: '#F8CECE',
-    borderColor: '#b20000',
-    marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+  inputSenha: {
+    flex: 1,
+    height: "100%",
+    fontSize: 15,
+    paddingLeft: 10,
+    paddingRight: 10,
   },
-  radioButtonSelected: {
-    width: 12,
-    height: 12,
-    borderRadius: 50,
-    backgroundColor: '#b20000',
+  botaoOlho: {
+    paddingHorizontal: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100%",
   },
-  radioButtonText: {
-    fontSize: 18,
-    color: '#333',
-  },
-  radioButtonTextSelected: {
-    color: '#b20000',
+  inputCodigo: {
+    backgroundColor: "#f1f1f1",
+    width: "70%",
+    height: 60,
+    borderRadius: 10,
+    fontSize: 24,
+    textAlign: 'center',
+    letterSpacing: 10,
+    bottom: 310,
+    marginBottom: 10,
   },
   botaoProximo: {
     backgroundColor: '#b20000',
     paddingVertical: 18,
-    paddingHorizontal: 105,
+    width: "85%",
     borderRadius: 20,
-    bottom: 215,
+    bottom: 290,
+    alignItems: 'center',
   },
   textoProximo: {
     color: '#fff',
@@ -171,9 +319,8 @@ const styles = StyleSheet.create({
   textoCancelar: {
     fontSize: 16,
     color: "#000000ff",
-    marginTop: 17,
     fontFamily: 'NunitoSans-Light',
-    bottom: 210,
+    bottom: 270,
   },
 });
 

@@ -1,26 +1,85 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet, Alert, Image, KeyboardAvoidingView, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, Platform, ScrollView, StyleSheet, Image, KeyboardAvoidingView, TextInput, ActivityIndicator } from 'react-native';
+import { requestOTP, loginOTP } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
+import Toast from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 
 const TelaEmail = ({ navigation }) => {  
+  const { signIn } = useAuth();
   const [email, setEmail] = useState(''); 
+  const [codigo, setCodigo] = useState('');
+  const [etapa, setEtapa] = useState('email'); // 'email' ou 'codigo'
+  const [loading, setLoading] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   const handleCancelar = () => {
     navigation.goBack();
   };
 
-  const handleSalvar = () => {
-    if (!email) {
-      Alert.alert("Erro", "Por favor, insira um email válido.");
+  const handleSolicitarCodigo = async () => {
+    if (!email || !email.includes('@')) {
+      showToast("Por favor, insira um email válido.", "error");
       return;
     }
 
-   
-    Alert.alert("Email Enviado", `Um link de recuperação foi enviado para: ${email}`);
-    //navigation.();
+    setLoading(true);
+    const result = await requestOTP(email);
+    setLoading(false);
+
+    if (result.success) {
+      setEtapa('codigo');
+      showToast("Código enviado! Verifique seu email.", "success");
+    } else {
+      showToast(result.message, "error");
+    }
+  };
+
+  const handleLoginComCodigo = async (codigoParam) => {
+    const codigoFinal = codigoParam || codigo;
+    
+    if (codigoFinal.length !== 6) {
+      return;
+    }
+
+    setLoading(true);
+    const result = await loginOTP(email, codigoFinal);
+    setLoading(false);
+
+    if (result.success) {
+      const { token, refreshToken, email: userEmail, role, id, nome } = result.data;
+      
+      const userData = {
+        id: id,
+        nome: nome,
+        email: userEmail,
+        role: role,
+      };
+      
+      await signIn(token, refreshToken, userData);
+      showToast("Login realizado com sucesso!", "success");
+    } else {
+      showToast(result.message, "error");
+      setCodigo(''); // Limpar código em caso de erro
+    }
+  };
+
+  const handleCodigoChange = (text) => {
+    setCodigo(text);
+    // Verificar automaticamente quando atingir 6 dígitos
+    if (text.length === 6) {
+      handleLoginComCodigo(text);
+    }
   };
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.container}>
 
@@ -36,25 +95,67 @@ const TelaEmail = ({ navigation }) => {
             resizeMode="contain"
           />
 
-          <Text style={styles.titulo}>Recuperação de senha</Text>
-          <Text style={styles.subtitulo}>Digite seu email para recuperar a senha</Text>
+          <Text style={styles.titulo}>Login com Código</Text>
 
-          {/* Campo de Input para Email */}
-          <TextInput
-            style={styles.inputEmail}
-            placeholder="Digite seu email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
+          {etapa === 'email' && (
+            <>
+              <Text style={styles.subtitulo}>Digite seu email para receber o código</Text>
 
-          {/* Botão para confirmar */}
-          <TouchableOpacity style={styles.botaoProximo} onPress={handleSalvar}>
-            <Text style={styles.textoProximo}>Enviar</Text>
-          </TouchableOpacity>
+              <TextInput
+                style={styles.inputEmail}
+                placeholder="Email"
+                placeholderTextColor="#aaa"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              <TouchableOpacity 
+                style={styles.botaoProximo} 
+                onPress={handleSolicitarCodigo}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.textoProximo}>Enviar Código</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+
+          {etapa === 'codigo' && (
+            <>
+              <Text style={styles.subtitulo}>Digite o código de 6 dígitos enviado para {email}</Text>
+
+              <TextInput
+                style={styles.inputCodigo}
+                placeholder="000000"
+                placeholderTextColor="#aaa"
+                value={codigo}
+                onChangeText={handleCodigoChange}
+                keyboardType="number-pad"
+                maxLength={6}
+                editable={!loading}
+              />
+
+              <TouchableOpacity 
+                style={styles.botaoProximo} 
+                onPress={handleLoginComCodigo}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.textoProximo}>Entrar</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Botão de Cancelar */}
-          <TouchableOpacity onPress={handleCancelar} style={styles.botaoCancelar}>
+          <TouchableOpacity onPress={handleCancelar}>
             <Text style={styles.textoCancelar}>Cancelar</Text>
           </TouchableOpacity>
 
@@ -73,7 +174,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     overflow: "hidden",
   },
-
   fundo3: {
     width: 605,
     left: 160,
@@ -84,7 +184,6 @@ const styles = StyleSheet.create({
     height: 130,
     bottom: 390,
   },
-
   titulo: {
     fontSize: 21,
     fontWeight: 'bold',
@@ -92,45 +191,53 @@ const styles = StyleSheet.create({
     fontFamily: 'Raleway-Bold',
   },
   subtitulo: {
-    fontSize: 19,
-    marginBottom: 20,
+    fontSize: 16,
+    marginBottom: 30,
     bottom: 330,
     textAlign: 'center',
     color: '#000000ff',
     fontFamily: 'NunitoSans-Light',
+    paddingHorizontal: 20,
   },
   inputEmail: {
-    height: 50,
-    width: '90%',
-    borderColor: '#f1f1f1',
-    borderWidth: 2,
+    backgroundColor: "#f1f1f1",
+    width: "85%",
+    height: 48,
     borderRadius: 10,
-    marginBottom: 20,
-    backgroundColor:"#f1f1f1",
-    paddingLeft: 10,
-    fontSize: 16,
-    color: '#333',
-    bottom: 300,
+    fontSize: 15,
+    padding: 10,
+    bottom: 310,
+    marginBottom: 10,
   },
-
   botaoProximo: {
     backgroundColor: '#b20000',
     paddingVertical: 18,
-    paddingHorizontal: 105,
+    width: "85%",
     borderRadius: 20,
-    bottom: 130,
+    bottom: 290,
+    alignItems: 'center',
   },
   textoProximo: {
     color: '#fff',
     fontSize: 22,
     fontFamily: 'NunitoSans-Light',
   },
+  inputCodigo: {
+    backgroundColor: "#f1f1f1",
+    width: "70%",
+    height: 60,
+    borderRadius: 10,
+    fontSize: 24,
+    textAlign: 'center',
+    letterSpacing: 10,
+    bottom: 310,
+    marginBottom: 10,
+  },
   textoCancelar: {
     fontSize: 16,
     color: "#000000ff",
-    marginTop: 17,
     fontFamily: 'NunitoSans-Light',
-    bottom: 130,
+    bottom: 270,
   },
 });
 

@@ -7,40 +7,57 @@ import {
   StyleSheet,
   Image,
   KeyboardAvoidingView,
-  ScrollView,
   Platform,
-  Alert
+  ActivityIndicator
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from '@expo/vector-icons';
+import { login } from "../services/authService";
+import { loginWithGoogle } from "../services/googleAuthService";
+import { useAuth } from "../context/AuthContext";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 const Login = ({ navigation }) => {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   const handleLogin = async () => {
     if (!email || !senha) {
-      Alert.alert("Erro", "Preencha todos os campos!");
+      showToast("Preencha todos os campos!", "error");
       return;
     }
 
-    try {
-      const usuariosJSON = await AsyncStorage.getItem("usuarios");
-      const usuarios = usuariosJSON ? JSON.parse(usuariosJSON) : [];
-
-      const usuario = usuarios.find(
-        (u) => u.email === email && u.senha === senha
-      );
-
-      if (usuario) {
-        await AsyncStorage.setItem("usuario", JSON.stringify(usuario)); // salva o usuário logado
-        Alert.alert("Bem-vindo!", `Olá, ${usuario.nome}!`);
-        navigation.navigate("Home");
-      } else {
-        Alert.alert("Erro", "Email ou senha incorretos!");
-      }
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Erro", "Falha ao acessar os dados.");
+    setLoading(true);
+    const result = await login(email, senha);
+    
+    if (result.success) {
+      const { token, refreshToken, email: userEmail, role, id, nome } = result.data;
+      
+      console.log('Dados recebidos do login:', { id, nome, email: userEmail, role });
+      
+      // Criar objeto de usuário com todos os dados
+      const userData = {
+        id: id,
+        nome: nome,
+        email: userEmail,
+        role: role,
+      };
+      
+      console.log('Salvando dados do usuário:', userData);
+      
+      await signIn(token, refreshToken, userData);
+      
+      console.log('Login concluído');
+      setLoading(false);
+      
+      // Não navegar manualmente - o App.js vai redirecionar automaticamente
+    } else {
+      setLoading(false);
+      showToast(result.message, "error");
     }
   };
 
@@ -52,64 +69,143 @@ const Login = ({ navigation }) => {
     navigation.navigate("RecuperacaoSenha");
   };
 
+  const handleLoginOTP = () => {
+    navigation.navigate("TelaEmail");
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    showToast("Abrindo Google...", "info");
+    
+    const result = await loginWithGoogle();
+    
+    if (result.success) {
+      const { token, refreshToken, email, role, id, nome } = result.data;
+      
+      console.log('Dados recebidos do Google:', { id, nome, email, role });
+      
+      const userData = {
+        id: id,
+        nome: nome,
+        email: email,
+        role: role,
+      };
+      
+      console.log('Salvando dados do usuário Google:', userData);
+      
+      await signIn(token, refreshToken, userData);
+      
+      console.log('Login com Google concluído');
+      showToast("Login realizado com sucesso!", "success");
+      setLoading(false);
+    } else {
+      setLoading(false);
+      showToast(result.message || "Erro ao fazer login com Google", "error");
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View style={styles.container}>
-          <Image
-            source={require("../assets/images/fundo2.png")}
-            style={styles.backgroundImage}
-            resizeMode="cover"
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
+      <View style={styles.container}>
+        <Image
+          source={require("../assets/images/fundo2.png")}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
+
+        <View style={styles.content}>
+          <View style={styles.tituloContainer}>
+            <Text style={styles.titulo}>Login</Text>
+            <Image
+              source={require("../assets/images/logoOng.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+
+          <Text style={styles.subtexto}>Bom te ver de novo!</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#aaa"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
 
-          <View style={styles.content}>
-            <View style={styles.tituloContainer}>
-              <Text style={styles.titulo}>Login</Text>
-              <Image
-                source={require("../assets/images/logoOng.png")}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-
-            <Text style={styles.subtexto}>Bom te ver de novo!</Text>
-
+          <View style={styles.inputSenhaContainer}>
             <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#aaa"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <TextInput
-              style={styles.input}
+              style={styles.inputSenha}
               placeholder="Senha"
               placeholderTextColor="#aaa"
-              secureTextEntry
+              secureTextEntry={!mostrarSenha}
               value={senha}
               onChangeText={setSenha}
             />
-
-            <TouchableOpacity onPress={handleRecuperacao}>
-              <Text style={styles.textoEsqueceu}>Esqueceu a senha?</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.botao} onPress={handleLogin}>
-              <Text style={styles.textoBotao}>Entrar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleCancelar}>
-              <Text style={styles.textoCancelar}>Cancelar</Text>
+            <TouchableOpacity 
+              style={styles.botaoOlho}
+              onPress={() => setMostrarSenha(!mostrarSenha)}
+            >
+              <Ionicons 
+                name={mostrarSenha ? "eye-off-outline" : "eye-outline"} 
+                size={22} 
+                color="#666" 
+              />
             </TouchableOpacity>
           </View>
+
+            <View style={styles.linhaOpcoes}>
+              <TouchableOpacity onPress={handleRecuperacao}>
+                <Text style={styles.textoEsqueceu}>Esqueceu a senha?</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity onPress={handleLoginOTP}>
+                <Text style={styles.textoOTP}>Entrar com código</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.botao} 
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.textoBotao}>Entrar</Text>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.divisor}>
+              <View style={styles.linha} />
+              <Text style={styles.textoDivisor}>ou</Text>
+              <View style={styles.linha} />
+            </View>
+
+            <TouchableOpacity 
+              style={styles.botaoGoogle}
+              onPress={handleGoogleLogin}
+            >
+              <Ionicons name="logo-google" size={20} color="#4285F4" style={styles.googleIcon} />
+              <Text style={styles.textoBotaoGoogle}>Continuar com Google</Text>
+            </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleCancelar}>
+            <Text style={styles.textoCancelar}>Cancelar</Text>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -120,26 +216,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     position: "relative",
-    paddingTop: 50,
   },
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
     width: "100%",
-    height: "110%",
+    height: "100%",
   },
   content: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 100,
-    paddingBottom: 50,
   },
   tituloContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
-    marginTop: 150,
+    marginBottom: 10,
     paddingRight: 130,
   },
   titulo: {
@@ -155,45 +247,113 @@ const styles = StyleSheet.create({
   subtexto: {
     fontSize: 19,
     color: "#000000ff",
-    marginBottom: 20,
+    marginBottom: 15,
     paddingRight: 159,
-    marginTop: -10,
     fontFamily: 'NunitoSans-Light',
   },
   input: {
     backgroundColor: "#f1f1f1",
     width: "90%",
     height: 48,
-    marginTop: 12,
+    marginTop: 10,
     borderRadius: 10,
     fontSize: 15,
     padding: 10,
   },
+  inputSenhaContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f1f1",
+    width: "90%",
+    height: 48,
+    marginTop: 10,
+    borderRadius: 10,
+  },
+  inputSenha: {
+    flex: 1,
+    height: "100%",
+    fontSize: 15,
+    paddingLeft: 10,
+    paddingRight: 10,
+  },
+  botaoOlho: {
+    paddingHorizontal: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100%",
+  },
   botao: {
     backgroundColor: "#b20000",
-    paddingVertical: 18,
+    paddingVertical: 15,
     width: "90%",
     borderRadius: 20,
-    marginTop: 20,
+    marginTop: 15,
   },
   textoBotao: {
     color: "#fff",
     textAlign: "center",
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: 'NunitoSans-Light',
   },
   textoCancelar: {
     fontSize: 16,
     color: "#000000ff",
-    marginTop: 17,
+    marginTop: 10,
     fontFamily: 'NunitoSans-Light',
   },
+  linhaOpcoes: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "90%",
+    marginTop: 15,
+  },
   textoEsqueceu: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#b20000",
-    marginTop: 27,
     fontFamily: 'NunitoSans-Light',
     textDecorationLine: "underline",
-    left: 87,
+  },
+  textoOTP: {
+    fontSize: 14,
+    color: "#b20000",
+    fontFamily: 'NunitoSans-Light',
+    textDecorationLine: "underline",
+  },
+  divisor: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "90%",
+    marginVertical: 12,
+  },
+  linha: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+  },
+  textoDivisor: {
+    marginHorizontal: 10,
+    fontSize: 14,
+    color: "#666",
+    fontFamily: 'NunitoSans-Light',
+  },
+  botaoGoogle: {
+    backgroundColor: "#fff",
+    paddingVertical: 12,
+    width: "90%",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 5,
+  },
+  googleIcon: {
+    marginRight: 10,
+  },
+  textoBotaoGoogle: {
+    color: "#333",
+    fontSize: 16,
+    fontFamily: 'NunitoSans-Light',
   },
 });

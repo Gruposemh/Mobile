@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   View, 
   StyleSheet, 
@@ -6,77 +6,45 @@ import {
   Image, 
   TextInput, 
   TouchableOpacity, 
-  Alert, 
   KeyboardAvoidingView,
-  ScrollView,
-  Platform
-} from "react-native";  
-import AsyncStorage from "@react-native-async-storage/async-storage";
+  Platform,
+  ActivityIndicator
+} from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import { registerUser } from "../services/authService";
+import Toast from "../components/Toast";
+import { useToast } from "../hooks/useToast";
 
 const CadastrarUsuario = ({ navigation }) => {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
-
-  // Função para criar admin se não existir
-  const criarAdmin = async () => {
-    try {
-      const usuariosJSON = await AsyncStorage.getItem("usuarios");
-      const usuarios = usuariosJSON ? JSON.parse(usuariosJSON) : [];
-
-      const adminExistente = usuarios.find(u => u.email === "admin@ong.com");
-
-      if (!adminExistente) {
-        const admin = {
-          nome: "Administrador",
-          email: "admin@ong.com",
-          cpf: "00000000000",
-          telefone: "00000000000",
-          senha: "admin123",
-          role: "ADMIN",
-        };
-
-        usuarios.push(admin);
-        await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
-      }
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível criar o administrador.");
-    }
-  };
-
-  // Cria admin assim que o componente carrega
-  useEffect(() => {
-    criarAdmin();
-  }, []);
+  const [loading, setLoading] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   const handleCriar = async () => {
-    if (!nome || !email || !cpf || !telefone || !senha) {
-      Alert.alert("Campos obrigatórios", "Por favor, preencha todos os campos.");
+    if (!nome || !email || !senha) {
+      showToast("Preencha todos os campos", "error");
       return;
     }
 
-    try {
-      const usuariosJSON = await AsyncStorage.getItem("usuarios");
-      const usuarios = usuariosJSON ? JSON.parse(usuariosJSON) : [];
+    if (senha.length < 6) {
+      showToast("A senha deve ter no mínimo 6 caracteres", "error");
+      return;
+    }
 
-      const usuarioExistente = usuarios.find((u) => u.email === email);
-      if (usuarioExistente) {
-        Alert.alert("Erro", "Este e-mail já está cadastrado.");
-        return;
-      }
+    setLoading(true);
+    const result = await registerUser(nome, email, senha);
+    setLoading(false);
 
-      const novoUsuario = { nome, email, cpf, telefone, senha, role: "USER" };
-      usuarios.push(novoUsuario);
-
-      await AsyncStorage.setItem("usuarios", JSON.stringify(usuarios));
-      await AsyncStorage.setItem("usuario", JSON.stringify(novoUsuario));
-
-      Alert.alert("Sucesso!", "Usuário cadastrado com sucesso!");
-      navigation.navigate("Home");
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar o usuário.");
+    if (result.success) {
+      showToast("Cadastro realizado! Verifique seu email.", "success");
+      setTimeout(() => {
+        navigation.navigate("VerificarEmail", { email });
+      }, 1000);
+    } else {
+      showToast(result.message, "error");
     }
   };
 
@@ -89,66 +57,74 @@ const CadastrarUsuario = ({ navigation }) => {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View style={estilos.container}>
-          <Image 
-            source={require("../assets/images/fundo1.png")} 
-            style={estilos.image} 
-          />
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
+      />
+      <View style={estilos.container}>
+        <Image 
+          source={require("../assets/images/fundo1.png")} 
+          style={estilos.image} 
+        />
 
-          <Text style={estilos.texto}>Cadastrar {"\n"}usuário</Text>
+        <Text style={estilos.texto}>Cadastrar {"\n"}usuário</Text>
 
+        <TextInput
+          style={estilos.input}
+          placeholder="Nome"
+          value={nome}
+          onChangeText={setNome}
+        />
+
+        <TextInput
+          style={estilos.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <View style={estilos.inputSenhaContainer}>
           <TextInput
-            style={estilos.input}
-            placeholder="Nome"
-            value={nome}
-            onChangeText={setNome}
-          />
-
-          <TextInput
-            style={estilos.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          <TextInput
-            style={estilos.input}
-            placeholder="CPF"
-            value={cpf}
-            onChangeText={setCpf}
-            keyboardType="numeric"
-          />
-
-          <TextInput
-            style={estilos.input}
-            placeholder="Telefone"
-            value={telefone}
-            onChangeText={setTelefone}
-            keyboardType="phone-pad"
-          />
-
-          <TextInput
-            style={estilos.input}
-            placeholder="Senha"
+            style={estilos.inputSenha}
+            placeholder="Senha (mínimo 6 caracteres)"
             value={senha}
             onChangeText={setSenha}
-            secureTextEntry={true}
+            secureTextEntry={!mostrarSenha}
           />
-
-          <View style={estilos.areaInferior}>
-            <TouchableOpacity style={estilos.botaoCriar} onPress={handleCriar}>
-              <Text style={estilos.textoCadastrar}>Criar</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleCancelar} style={estilos.botaoCancelar}>
-              <Text style={estilos.textoCancelar}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={estilos.botaoOlho}
+            onPress={() => setMostrarSenha(!mostrarSenha)}
+          >
+            <Ionicons 
+              name={mostrarSenha ? "eye-off-outline" : "eye-outline"} 
+              size={22} 
+              color="#666" 
+            />
+          </TouchableOpacity>
         </View>
-      </ScrollView>
+
+        <View style={estilos.areaInferior}>
+          <TouchableOpacity 
+            style={estilos.botaoCriar} 
+            onPress={handleCriar}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={estilos.textoCadastrar}>Criar</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleCancelar} style={estilos.botaoCancelar}>
+            <Text style={estilos.textoCancelar}>Cancelar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -158,10 +134,9 @@ export default CadastrarUsuario;
 const estilos = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "flex-start",
+    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#ffffff",
-    paddingBottom: 40,
   },
   image: {
     position: "absolute",
@@ -174,39 +149,61 @@ const estilos = StyleSheet.create({
   texto: {
     fontSize: 50,
     fontFamily: "Raleway-Bold",
-    paddingTop: 130,
     paddingRight: 120,
     paddingHorizontal: 30,
-    paddingBottom: 40,
+    paddingBottom: 25,
+    alignSelf: "flex-start",
+    marginLeft: 20,
   },
   input: {
     backgroundColor: "#f1f1f1",
     width: "86%",
     height: 48,
-    marginTop: 14,
+    marginTop: 10,
     borderRadius: 10,
     fontSize: 15,
     padding: 14,
   },
+  inputSenhaContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f1f1",
+    width: "86%",
+    height: 48,
+    marginTop: 10,
+    borderRadius: 10,
+  },
+  inputSenha: {
+    flex: 1,
+    height: "100%",
+    fontSize: 15,
+    paddingLeft: 14,
+    paddingRight: 10,
+  },
+  botaoOlho: {
+    paddingHorizontal: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100%",
+  },
   areaInferior: {
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 25,
     gap: 10,
   },
   botaoCriar: {
     backgroundColor: "#b20000",
-    paddingVertical: 19,
+    paddingVertical: 16,
     paddingHorizontal: 145,
     borderRadius: 20,
-    marginTop: 55,
   },
   textoCadastrar: {
     color: "#fff",
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: "NunitoSans-Light",
   },
   botaoCancelar: {
-    marginTop: 10,
+    marginTop: 5,
   },
   textoCancelar: {
     fontSize: 16,

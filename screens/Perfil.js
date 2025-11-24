@@ -11,32 +11,36 @@ import {
 } from "react-native";
 import Notificacoes from "./Notificacoes";
 import Informacoes from "./Informacoes";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "../context/AuthContext";
+import { verificarVoluntario } from "../services/voluntarioService";
 
 const Perfil = ({ navigation }) => {
-  const [usuario, setUsuario] = useState(null);
+  const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [voluntarioInfo, setVoluntarioInfo] = useState(null);
 
   // Carrega os dados toda vez que a tela recebe foco
   useFocusEffect(
     React.useCallback(() => {
-      const carregarUsuario = async () => {
+      const carregarDados = async () => {
         try {
           setLoading(true);
-          const dadosUsuario = await AsyncStorage.getItem("usuario");
-          if (dadosUsuario) {
-            setUsuario(JSON.parse(dadosUsuario));
+          if (user?.id) {
+            const result = await verificarVoluntario(user.id);
+            if (result.success && result.isVoluntario) {
+              setVoluntarioInfo(result.data);
+            }
           }
         } catch (error) {
-          console.log("Erro ao carregar usuário:", error);
+          console.log("Erro ao carregar dados:", error);
         } finally {
           setLoading(false);
         }
       };
-      carregarUsuario();
-    }, [])
+      carregarDados();
+    }, [user])
   );
 
   const sairDaConta = async () => {
@@ -46,8 +50,9 @@ const Perfil = ({ navigation }) => {
         text: "Sair",
         style: "destructive",
         onPress: async () => {
-          await AsyncStorage.removeItem("usuario");
-          navigation.replace("Login");
+          console.log('Saindo da conta...');
+          await signOut();
+          // Não precisa navegar, o App.js vai redirecionar automaticamente
         },
       },
     ]);
@@ -81,8 +86,8 @@ const Perfil = ({ navigation }) => {
         <View style={styles.perfilContainer}>
           <Image
             source={
-              usuario?.foto
-                ? { uri: usuario.foto }
+              user?.foto
+                ? { uri: user.foto }
                 : require("../assets/images/logoPerfil.png")
             }
             style={styles.foto}
@@ -90,11 +95,42 @@ const Perfil = ({ navigation }) => {
 
           <View style={styles.infoContainer}>
             <Text style={styles.nome}>
-              {usuario?.nome || "Nome não disponível"}
+              {user?.nome || "Nome não disponível"}
             </Text>
             <Text style={styles.email}>
-              {usuario?.email || "Email não disponível"}
+              {user?.email || "Email não disponível"}
             </Text>
+            
+            {/* Status de voluntário */}
+            {voluntarioInfo && (
+              <View style={styles.statusContainer}>
+                <View style={[
+                  styles.statusVoluntario,
+                  voluntarioInfo.status === 'APROVADO' && styles.statusAprovado,
+                  voluntarioInfo.status === 'PENDENTE' && styles.statusPendente,
+                  voluntarioInfo.status === 'CANCELADO' && styles.statusCancelado,
+                ]}>
+                  {voluntarioInfo.status === 'APROVADO' && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Ionicons name="checkmark-circle" size={14} color="#28a745" />
+                      <Text style={{ color: '#28a745', fontSize: 14, fontFamily: "NunitoSans-Light" }}>Voluntário Ativo</Text>
+                    </View>
+                  )}
+                  {voluntarioInfo.status === 'PENDENTE' && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Ionicons name="time-outline" size={14} color="#856404" />
+                      <Text style={{ color: '#856404', fontSize: 14, fontFamily: "NunitoSans-Light" }}>Voluntário Pendente</Text>
+                    </View>
+                  )}
+                  {voluntarioInfo.status === 'CANCELADO' && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Ionicons name="close-circle" size={14} color="#721c24" />
+                      <Text style={{ color: '#721c24', fontSize: 14, fontFamily: "NunitoSans-Light" }}>Voluntário Cancelado</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
 
             {/* Botão de editar */}
             <TouchableOpacity
@@ -245,6 +281,26 @@ const styles = StyleSheet.create({
     color: "#000000ff",
     marginTop: 4,
     fontFamily: "NunitoSans-Light",
+  },
+  statusContainer: {
+    marginTop: 8,
+  },
+  statusVoluntario: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 5,
+  },
+  statusAprovado: {
+    color: "#28a745",
+    backgroundColor: "#d4edda",
+  },
+  statusPendente: {
+    color: "#856404",
+    backgroundColor: "#fff3cd",
+  },
+  statusCancelado: {
+    color: "#721c24",
+    backgroundColor: "#f8d7da",
   },
   botaoEditar: {
     backgroundColor: "#ffffffff",

@@ -12,8 +12,15 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
+import MenuModal from "../components/Menu";
+import ModalEmDesenvolvimento from "../components/ModalEmDesenvolvimento";
 
 const DoacaoDinheiro = ({ navigation }) => {
+  const [modalDevOpen, setModalDevOpen] = useState(false);
+
+  const handleDoacaoEmDesenvolvimento = () => {
+    setModalDevOpen(true);
+  };
   const [valor, setValor] = useState("");
   const [tipoDoacao, setTipoDoacao] = useState("avulso");
   const [nomeCompleto, setNomeCompleto] = useState("");
@@ -27,8 +34,12 @@ const DoacaoDinheiro = ({ navigation }) => {
   const [complemento, setComplemento] = useState("");
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
-
   const [metodoSelecionado, setMetodoSelecionado] = useState(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
 
 
   const icons = {
@@ -50,7 +61,7 @@ const DoacaoDinheiro = ({ navigation }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={toggleModal}>
               <Image
                 source={require("../assets/images/Menu.png")}
                 style={styles.icon}
@@ -322,7 +333,7 @@ const DoacaoDinheiro = ({ navigation }) => {
         
           </View >
           <View style={styles.fim}>
-            <TouchableOpacity onPress={console.log("ok")} style={styles.botaoContinuar}>
+            <TouchableOpacity onPress={handleDoacaoEmDesenvolvimento} style={styles.botaoContinuar}>
                       <Text style={styles.textoContinuar}>Continuar</Text>
                     </TouchableOpacity>
 
@@ -331,6 +342,8 @@ const DoacaoDinheiro = ({ navigation }) => {
 
         </ScrollView>
       </TouchableWithoutFeedback>
+      <MenuModal visible={isModalVisible} onClose={toggleModal} />
+      <ModalEmDesenvolvimento visible={modalDevOpen} onClose={() => setModalDevOpen(false)} />
     </KeyboardAvoidingView>
   );
 };
