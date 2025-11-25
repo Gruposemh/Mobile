@@ -25,7 +25,13 @@ const SaibaMais = ({ navigation }) => {
     };
 
 return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      bounces={true}
+      alwaysBounceVertical={true}
+      overScrollMode="always"
+    >
  
       <View style={styles.header}>
         <TouchableOpacity onPress={toggleModal}>
@@ -55,10 +61,20 @@ return (
          <Image
             source={require("../assets/images/saibaMais.png")}
             style={styles.foto}
+            fadeDuration={0}
+            resizeMode="cover"
           />
 
-          <View >
-            <Text style= {styles.texto} >A <Text style={{ color: '#B20000' }}>ONG Voluntários Pro Bem</Text> sobrevive graças às doações recebidas. Todas as nossas ações, eventos e campanhas são realizadas por meio dos recursos doados, para que esses projetos possam continuar acontecendo e, assim, tanto a comunidade quanto o bairro possam ser transformados.Por isso, contamos com a sua ajuda. Colabore para um mundo melhor.Você pode nos ajudar de várias formas! É possível fazer uma doação mensal de qualquer valor, ou contribuir com doações avulsas. Também aceitamos móveis, roupas e outros itens em bom estado. Além disso, você pode ser voluntário e participar dos nossos eventos. Toda ajuda faz a diferença! 💛</Text>
+          <View>
+            <Text style={styles.texto}>
+              A <Text style={{ color: '#B20000' }}>ONG Voluntários Pro Bem</Text> sobrevive graças às doações recebidas. Todas as nossas ações, eventos e campanhas são realizadas por meio dos recursos doados, para que esses projetos possam continuar acontecendo e, assim, tanto a comunidade quanto o bairro possam ser transformados.
+              {'\n\n'}
+              Por isso, contamos com a sua ajuda. Colabore para um mundo melhor.
+              {'\n\n'}
+              Você pode nos ajudar de várias formas! É possível fazer uma doação mensal de qualquer valor, ou contribuir com doações avulsas. Também aceitamos móveis, roupas e outros itens em bom estado. Além disso, você pode ser voluntário e participar dos nossos eventos.
+              {'\n\n'}
+              Toda ajuda faz a diferença! 💛
+            </Text>
           </View>
            <View style={styles.doacoes}>
                        <TouchableOpacity onPress={handleDoacaoDinheiro}>
@@ -143,11 +159,12 @@ const styles = StyleSheet.create({
   },
 
   texto: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'NunitoSans-Light', 
-    marginHorizontal: 55,
+    marginHorizontal: 25,
     marginVertical: 30,
-
+    lineHeight: 26,
+    textAlign: 'justify',
   },
     doar: {
     marginVertical: 7, 

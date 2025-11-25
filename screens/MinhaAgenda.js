@@ -137,6 +137,9 @@ const MinhaAgenda = ({ navigation }) => {
     <ScrollView 
       style={styles.container} 
       showsVerticalScrollIndicator={false}
+      bounces={true}
+      alwaysBounceVertical={true}
+      overScrollMode="always"
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#b20000"]} />
       }
@@ -172,12 +175,6 @@ const MinhaAgenda = ({ navigation }) => {
       {eventosInscritos.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Você ainda não está inscrito em nenhum evento</Text>
-          <TouchableOpacity
-            style={styles.botaoVerEventos}
-            onPress={() => navigation.navigate("VerMais")}
-          >
-            <Text style={styles.textoBotaoVerEventos}>Ver Eventos Disponíveis</Text>
-          </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.eventosContainer}>
@@ -242,18 +239,22 @@ const MinhaAgenda = ({ navigation }) => {
         </View>
       )}
 
+      {/* Botão Outros Eventos */}
+      <View style={styles.botaoSingleContainer}>
+        <TouchableOpacity
+          style={styles.botaoAgendaSingle}
+          onPress={() => navigation.navigate("VerMais")}
+        >
+          <Text style={styles.textoAgenda}>Outros eventos</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* ATIVIDADES */}
       <Text style={styles.sectionTitle}>Atividades</Text>
       
       {atividadesInscritas.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>Você ainda não está inscrito em nenhuma atividade</Text>
-          <TouchableOpacity
-            style={styles.botaoVerEventos}
-            onPress={() => navigation.navigate("Atividades")}
-          >
-            <Text style={styles.textoBotaoVerEventos}>Ver Atividades Disponíveis</Text>
-          </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.eventosContainer}>
@@ -298,20 +299,18 @@ const MinhaAgenda = ({ navigation }) => {
         </View>
       )}
 
-      <View style={styles.botoes}>
+      {/* Botão Outras Atividades */}
+      <View style={styles.botaoSingleContainer}>
         <TouchableOpacity
-          style={styles.botaoAgenda}
-          onPress={() => navigation.navigate("VerMais")}
-        >
-          <Text style={styles.textoAgenda}>Outros eventos</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.botaoAgenda, { marginTop: 10 }]}
+          style={styles.botaoAgendaSingle}
           onPress={() => navigation.navigate("Atividades")}
         >
           <Text style={styles.textoAgenda}>Outras atividades</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Espaçamento final */}
+      <View style={{ height: 80 }} />
 
       <MenuModal visible={isModalVisible} onClose={toggleModal} />
     </ScrollView>
@@ -466,11 +465,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Raleway-Bold",
   },
-  botaoAgenda: {
+  botaoAgendaSingle: {
     backgroundColor: "#fff",
-    width: 150,
-    height: 36,
-    borderRadius: 15,
+    paddingHorizontal: 30,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
@@ -481,10 +480,10 @@ const styles = StyleSheet.create({
     color: "#b20000",
     fontFamily: "Raleway-Bold",
   },
-  botoes: {
+  botaoSingleContainer: {
     alignItems: 'center',
-    marginTop: 30,
-    marginBottom: 50,
+    marginTop: 20,
+    marginBottom: 10,
   }
 });
 

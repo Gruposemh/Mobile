@@ -100,8 +100,8 @@ const VerificarEmail = ({ route, navigation }) => {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.textoCancelar}>Sair</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('InicioDois')}>
+          <Text style={styles.textoCancelar}>Cancelar</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -2,7 +2,8 @@ import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useFonts } from "expo-font";
-import { ActivityIndicator, View, Linking } from "react-native";
+import { ActivityIndicator, View, Linking, Image } from "react-native";
+import { Asset } from 'expo-asset';
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import * as WebBrowser from 'expo-web-browser';
 
@@ -162,16 +163,52 @@ function AppNavigator() {
   );
 }
 
+// Preload de imagens críticas
+const cacheImages = (images) => {
+  return images.map(image => {
+    if (typeof image === 'string') {
+      return Image.prefetch(image);
+    } else {
+      return Asset.fromModule(image).downloadAsync();
+    }
+  });
+};
+
 export default function App() {
+  const [appReady, setAppReady] = React.useState(false);
+  
   const [fontsLoaded] = useFonts({
     "Raleway-Bold": require("./assets/fonts/Raleway-Bold.ttf"),
     "NunitoSans-Light": require("./assets/fonts/NunitoLight-K7dKW.ttf"),
   });
 
-  if (!fontsLoaded) {
+  useEffect(() => {
+    async function loadResourcesAndDataAsync() {
+      try {
+        // Preload de imagens críticas
+        const imageAssets = cacheImages([
+          require('./assets/images/fundo1.png'),
+          require('./assets/images/fundo2.png'),
+          require('./assets/images/logoOng.png'),
+        ]);
+
+        await Promise.all([...imageAssets]);
+      } catch (e) {
+        console.warn('Erro ao carregar recursos:', e);
+      } finally {
+        setAppReady(true);
+      }
+    }
+
+    if (fontsLoaded) {
+      loadResourcesAndDataAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded || !appReady) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
+        <ActivityIndicator size="large" color="#b20000" />
       </View>
     );
   }

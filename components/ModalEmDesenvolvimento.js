@@ -8,7 +8,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const ModalEmDesenvolvimento = ({ visible, onClose }) => {
+const ModalEmDesenvolvimento = ({ visible, onClose, titulo, mensagem }) => {
+  const tituloFinal = titulo || "Sistema de Doações\nem Desenvolvimento";
+  const mensagemFinal = mensagem || "Estamos trabalhando para trazer a você uma experiência completa e segura de doação!";
+  
   return (
     <Modal
       visible={visible}
@@ -23,42 +26,46 @@ const ModalEmDesenvolvimento = ({ visible, onClose }) => {
             <View style={styles.iconContainer}>
               <Ionicons name="construct-outline" size={44} color="#B20000" />
             </View>
-            <Text style={styles.title}>Sistema de Doações{'\n'}em Desenvolvimento</Text>
+            <Text style={styles.title}>{tituloFinal}</Text>
           </View>
 
           {/* Body */}
           <View style={styles.body}>
             <Text style={styles.message}>
-              Estamos trabalhando para trazer a você uma experiência completa e segura de doação!
+              {mensagemFinal}
             </Text>
             
-            {/* Features */}
-            <View style={styles.featuresContainer}>
-              <View style={styles.featureItem}>
-                <View style={styles.featureIconWrapper}>
-                  <Ionicons name="heart" size={20} color="#B20000" />
-                </View>
-                <Text style={styles.featureText}>Doações únicas ou mensais</Text>
-              </View>
+            {/* Features - só mostra se não for chat */}
+            {!titulo && (
+              <>
+                <View style={styles.featuresContainer}>
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIconWrapper}>
+                      <Ionicons name="heart" size={20} color="#B20000" />
+                    </View>
+                    <Text style={styles.featureText}>Doações únicas ou mensais</Text>
+                  </View>
 
-              <View style={styles.featureItem}>
-                <View style={styles.featureIconWrapper}>
-                  <Ionicons name="card" size={20} color="#B20000" />
-                </View>
-                <Text style={styles.featureText}>Múltiplas formas de pagamento</Text>
-              </View>
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIconWrapper}>
+                      <Ionicons name="card" size={20} color="#B20000" />
+                    </View>
+                    <Text style={styles.featureText}>Múltiplas formas de pagamento</Text>
+                  </View>
 
-              <View style={styles.featureItem}>
-                <View style={styles.featureIconWrapper}>
-                  <Ionicons name="shield-checkmark" size={20} color="#B20000" />
+                  <View style={styles.featureItem}>
+                    <View style={styles.featureIconWrapper}>
+                      <Ionicons name="shield-checkmark" size={20} color="#B20000" />
+                    </View>
+                    <Text style={styles.featureText}>Transações 100% seguras</Text>
+                  </View>
                 </View>
-                <Text style={styles.featureText}>Transações 100% seguras</Text>
-              </View>
-            </View>
 
-            <Text style={styles.submessage}>
-              Enquanto isso, você pode se tornar um voluntário e ajudar de outras formas!
-            </Text>
+                <Text style={styles.submessage}>
+                  Enquanto isso, você pode se tornar um voluntário e ajudar de outras formas!
+                </Text>
+              </>
+            )}
           </View>
 
           {/* Footer */}

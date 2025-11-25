@@ -16,6 +16,7 @@ import { loginWithGoogle } from "../services/googleAuthService";
 import { useAuth } from "../context/AuthContext";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
+import GoogleIcon from "../components/GoogleIcon";
 
 const Login = ({ navigation }) => {
   const { signIn } = useAuth();
@@ -127,6 +128,7 @@ const Login = ({ navigation }) => {
           source={require("../assets/images/fundo2.png")}
           style={styles.backgroundImage}
           resizeMode="cover"
+          fadeDuration={0}
         />
 
         <View style={styles.content}>
@@ -136,6 +138,7 @@ const Login = ({ navigation }) => {
               source={require("../assets/images/logoOng.png")}
               style={styles.logo}
               resizeMode="contain"
+              fadeDuration={0}
             />
           </View>
 
@@ -203,9 +206,11 @@ const Login = ({ navigation }) => {
             <TouchableOpacity 
               style={styles.botaoGoogle}
               onPress={handleGoogleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
             >
-              <Ionicons name="logo-google" size={20} color="#4285F4" style={styles.googleIcon} />
-              <Text style={styles.textoBotaoGoogle}>Continuar com Google</Text>
+              <GoogleIcon size={20} />
+              <Text style={styles.textoBotaoGoogle}>Entrar com Google</Text>
             </TouchableOpacity>
 
           <TouchableOpacity onPress={handleCancelar}>
@@ -228,18 +233,21 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: "100%",
     height: "100%",
+    backgroundColor: "#f5f5f5", // Cor de fundo enquanto carrega
   },
   content: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-end",
     alignItems: "center",
     paddingHorizontal: 20,
+    paddingBottom: 60,
   },
   tituloContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
     paddingRight: 130,
+    marginTop: 30,
   },
   titulo: {
     fontSize: 50,
@@ -345,22 +353,20 @@ const styles = StyleSheet.create({
   },
   botaoGoogle: {
     backgroundColor: "#fff",
-    paddingVertical: 12,
     width: "90%",
-    borderRadius: 20,
+    height: 48,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: "#ddd",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 5,
-  },
-  googleIcon: {
-    marginRight: 10,
+    gap: 10,
   },
   textoBotaoGoogle: {
     color: "#333",
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'NunitoSans-Light',
   },
 });

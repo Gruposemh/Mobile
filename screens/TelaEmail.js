@@ -14,7 +14,13 @@ const TelaEmail = ({ navigation }) => {
   const { toast, showToast, hideToast } = useToast();
 
   const handleCancelar = () => {
-    navigation.goBack();
+    if (etapa === 'codigo') {
+      // Se estiver na etapa de código, voltar para a tela inicial
+      navigation.navigate('InicioDois');
+    } else {
+      // Se estiver na etapa de email, apenas voltar
+      navigation.goBack();
+    }
   };
 
   const handleSolicitarCodigo = async () => {

@@ -4,49 +4,61 @@ import {
   StyleSheet, 
   Text, 
   TouchableOpacity, 
-  ScrollView 
+  ScrollView,
+  ActivityIndicator
 } from "react-native";  
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect } from "@react-navigation/native"; 
+import { useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "../context/AuthContext";
+import { verificarVoluntario } from "../services/voluntarioService";
 
 const Informacoes = ({ navigation }) => {
-  const [usuario, setUsuario] = useState(null);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [voluntarioInfo, setVoluntarioInfo] = useState(null);
 
-  
   useFocusEffect(
     React.useCallback(() => {
-      const carregarUsuario = async () => {
+      const carregarDados = async () => {
         try {
-          const dadosUsuario = await AsyncStorage.getItem("usuario");
-          if (dadosUsuario) {
-            setUsuario(JSON.parse(dadosUsuario));
+          setLoading(true);
+          if (user?.id) {
+            const result = await verificarVoluntario(user.id);
+            if (result.success && result.isVoluntario) {
+              setVoluntarioInfo(result.data);
+            }
           }
         } catch (error) {
-          console.log("Erro ao carregar usuário:", error);
+          console.log("Erro ao carregar dados:", error);
+        } finally {
+          setLoading(false);
         }
       };
-      carregarUsuario();
-    }, []) 
+      carregarDados();
+    }, [user])
   );
 
-  // Função para mascarar CPF
-  const mascararCpf = (cpf) => {
-    if (!cpf) return "CPF não disponível";  
-    return cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-**");
+  const formatarTelefone = (telefone) => {
+    if (!telefone) return "Não informado";
+    return telefone.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
   };
 
-  if (!usuario) {
+  if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Carregando...</Text>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#b20000" />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1 }}
+        bounces={true}
+        alwaysBounceVertical={true}
+        overScrollMode="always"
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.voltar}>
@@ -59,22 +71,40 @@ const Informacoes = ({ navigation }) => {
 
         {/* Conteúdo de Informações Pessoais */}
         <View style={styles.infoContainer}>
-          <Text style={styles.infoTitulo}>{usuario.nome}</Text>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Nome</Text>
+            <Text style={styles.infoTexto}>{user?.nome || "Não informado"}</Text>
+          </View>
 
           <View style={styles.linhaInfo} />
 
-          <Text style={styles.infoTitulo}>Email</Text>
-          <Text style={styles.infoTexto}>{usuario.email}</Text> 
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Email</Text>
+            <Text style={styles.infoTexto}>{user?.email || "Não informado"}</Text>
+          </View>
 
-          <View style={styles.linhaInfo} />
+          {/* Informações adicionais apenas para voluntários aprovados */}
+          {voluntarioInfo && voluntarioInfo.status === 'APROVADO' && (
+            <>
+              <View style={styles.linhaInfo} />
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>CPF</Text>
+                <Text style={styles.infoTexto}>{voluntarioInfo.cpf || "Não informado"}</Text>
+              </View>
 
-          <Text style={styles.infoTitulo}>CPF</Text>
-          <Text style={styles.infoTexto}>{mascararCpf(usuario.cpf)}</Text> 
+              <View style={styles.linhaInfo} />
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Telefone</Text>
+                <Text style={styles.infoTexto}>{formatarTelefone(voluntarioInfo.telefone)}</Text>
+              </View>
 
-          <View style={styles.linhaInfo} />
-
-          <Text style={styles.infoTitulo}>Histórico de Doações</Text>
-          <Text style={styles.infoTexto}>Você ainda não fez doações.</Text>
+              <View style={styles.linhaInfo} />
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Endereço</Text>
+                <Text style={styles.infoTexto}>{voluntarioInfo.endereco || "Não informado"}</Text>
+              </View>
+            </>
+          )}
 
         </View>
       </ScrollView>
@@ -114,21 +144,23 @@ const styles = StyleSheet.create({
   infoContainer: {
     marginTop: 10,
   },
-  infoTitulo: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#000000ff",
-    marginBottom: 5,
+  infoItem: {
+    paddingVertical: 12,
+  },
+  infoLabel: {
+    fontSize: 14,
+    fontFamily: "Raleway-Bold",
+    color: "#666",
+    marginBottom: 6,
   },
   infoTexto: {
     fontSize: 16,
-    color: "#000000ff",
-    marginBottom: 15,
+    fontFamily: "NunitoSans-Light",
+    color: "#000",
   },
   linhaInfo: {
     height: 1,
     backgroundColor: "#e0e0e0",
-    marginVertical: 10,
   },
 
 });

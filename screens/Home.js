@@ -178,6 +178,9 @@ const Home = ({ navigation }) => {
     <ScrollView 
       style={styles.container} 
       showsVerticalScrollIndicator={false}
+      bounces={true}
+      alwaysBounceVertical={true}
+      overScrollMode="always"
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#b20000"]} />
       }
@@ -244,42 +247,47 @@ const Home = ({ navigation }) => {
             Nenhum evento disponível no momento
           </Text>
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContainer}
-          >
-            {eventosDisponiveis.slice(0, 5).map((evento) => (
-              <TouchableOpacity
-                key={evento.id}
-                onPress={() => handleAbrirEvento(evento)}
-              >
-                <ImageBackground
-                  source={
-                    evento.imagemUrl 
-                      ? { uri: evento.imagemUrl } 
-                      : require("../assets/images/sopa.png")
-                  }
-                  style={styles.card}
-                  imageStyle={{ borderRadius: 10 }}
-                  defaultSource={require("../assets/images/sopa.png")}
-                  onError={(error) => {
-                    console.log('❌ Erro ao carregar imagem do evento:', evento.nome, error.nativeEvent.error);
-                  }}
+          <>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContainer}
+            >
+              {eventosDisponiveis.slice(0, 3).map((evento) => (
+                <TouchableOpacity
+                  key={evento.id}
+                  onPress={() => handleAbrirEvento(evento)}
                 >
-                  <View style={styles.overlay}>
-                    <Text style={styles.cardText}>{evento.nome}</Text>
-                  </View>
-                </ImageBackground>
+                  <ImageBackground
+                    source={
+                      evento.imagemUrl 
+                        ? { uri: evento.imagemUrl } 
+                        : require("../assets/images/sopa.png")
+                    }
+                    style={styles.card}
+                    imageStyle={{ borderRadius: 10 }}
+                    defaultSource={require("../assets/images/sopa.png")}
+                    onError={(error) => {
+                      console.log('❌ Erro ao carregar imagem do evento:', evento.nome, error.nativeEvent.error);
+                    }}
+                  >
+                    <View style={styles.overlay}>
+                      <Text style={styles.cardText}>{evento.nome}</Text>
+                    </View>
+                  </ImageBackground>
+                </TouchableOpacity>
+              ))}
+              
+              {/* Botão Ver Mais no final do carrossel */}
+              <TouchableOpacity 
+                style={styles.cardVerMais}
+                onPress={handleVerMais}
+              >
+                <Ionicons name="arrow-forward-circle-outline" size={50} color="#b20000" />
+                <Text style={styles.textoCardVerMais}>Ver mais</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-
-        {eventosDisponiveis.length > 0 && (
-          <TouchableOpacity style={styles.botaoVerMais} onPress={handleVerMais}>
-            <Text style={styles.textoVermais}>Ver mais...</Text>
-          </TouchableOpacity>
+            </ScrollView>
+          </>
         )}
 
         {/* ATIVIDADES */}
@@ -290,39 +298,44 @@ const Home = ({ navigation }) => {
             Nenhuma atividade disponível no momento
           </Text>
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContainer}
-          >
-            {atividades.filter(a => !atividadesInscritas.includes(a.id)).slice(0, 5).map((atividade) => (
-              <TouchableOpacity
-                key={atividade.id}
-                onPress={() => handleAbrirAtividade(atividade)}
-              >
-                <ImageBackground
-                  source={
-                    atividade.imagem 
-                      ? { uri: atividade.imagem } 
-                      : require("../assets/images/sopa.png")
-                  }
-                  style={styles.card}
-                  imageStyle={{ borderRadius: 10 }}
-                  defaultSource={require("../assets/images/sopa.png")}
+          <>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContainer}
+            >
+              {atividades.filter(a => !atividadesInscritas.includes(a.id)).slice(0, 3).map((atividade) => (
+                <TouchableOpacity
+                  key={atividade.id}
+                  onPress={() => handleAbrirAtividade(atividade)}
                 >
-                  <View style={styles.overlay}>
-                    <Text style={styles.cardText}>{atividade.titulo}</Text>
-                  </View>
-                </ImageBackground>
+                  <ImageBackground
+                    source={
+                      atividade.imagem 
+                        ? { uri: atividade.imagem } 
+                        : require("../assets/images/sopa.png")
+                    }
+                    style={styles.card}
+                    imageStyle={{ borderRadius: 10 }}
+                    defaultSource={require("../assets/images/sopa.png")}
+                  >
+                    <View style={styles.overlay}>
+                      <Text style={styles.cardText}>{atividade.titulo}</Text>
+                    </View>
+                  </ImageBackground>
+                </TouchableOpacity>
+              ))}
+              
+              {/* Botão Ver Mais no final do carrossel */}
+              <TouchableOpacity 
+                style={styles.cardVerMais}
+                onPress={() => navigation.navigate("Atividades")}
+              >
+                <Ionicons name="arrow-forward-circle-outline" size={50} color="#b20000" />
+                <Text style={styles.textoCardVerMais}>Ver mais</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-
-        {atividades.filter(a => !atividadesInscritas.includes(a.id)).length > 0 && (
-          <TouchableOpacity style={styles.botaoVerMais} onPress={() => navigation.navigate("Atividades")}>
-            <Text style={styles.textoVermais}>Ver mais...</Text>
-          </TouchableOpacity>
+            </ScrollView>
+          </>
         )}
 
         {/* DOAÇÕES */}
@@ -456,6 +469,7 @@ const styles = StyleSheet.create({
     fontFamily: "NunitoSans-Light",
     fontSize: 20,
     marginBottom: 17,
+    marginTop: 30,
   },
   scrollContainer: {
     paddingHorizontal: 10,
@@ -486,16 +500,18 @@ const styles = StyleSheet.create({
     fontFamily: "Raleway-Bold",
     textAlign: "center",
   },
-  botaoVerMais: {
-    marginTop: 15,
-    alignSelf: "flex-end",
+  cardVerMais: {
+    width: 190,
+    height: 210,
     marginRight: 15,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  textoVermais: {
-    fontSize: 15,
+  textoCardVerMais: {
+    fontSize: 16,
     color: "#b20000",
-    fontFamily: "NunitoSans-Light",
-    textDecorationLine: "underline",
+    fontFamily: "Raleway-Bold",
+    marginTop: 10,
   },
   doacoes: {
     justifyContent: "center",

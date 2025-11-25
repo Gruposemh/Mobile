@@ -12,10 +12,14 @@ import {
 } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { registerUser } from "../services/authService";
+import { loginWithGoogle } from "../services/googleAuthService";
+import { useAuth } from "../context/AuthContext";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
+import GoogleIcon from "../components/GoogleIcon";
 
 const CadastrarUsuario = ({ navigation }) => {
+  const { signIn } = useAuth();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -52,6 +56,42 @@ const CadastrarUsuario = ({ navigation }) => {
     navigation.goBack();
   };
 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    showToast("Abrindo Google...", "info");
+    
+    const result = await loginWithGoogle();
+    
+    if (result.success) {
+      const { token, refreshToken, email, role, id, nome } = result.data;
+      
+      console.log('Dados recebidos do Google:', { id, nome, email, role });
+      
+      const userData = {
+        id: id,
+        nome: nome,
+        email: email,
+        role: role,
+      };
+      
+      console.log('Salvando dados do usuário Google:', userData);
+      
+      await signIn(token, refreshToken, userData);
+      
+      console.log('Login com Google concluído');
+      showToast("Cadastro realizado com sucesso!", "success");
+      setLoading(false);
+    } else if (result.waiting) {
+      console.log('⏳ Aguardando retorno do navegador...');
+      setTimeout(() => {
+        setLoading(false);
+      }, 3000);
+    } else {
+      setLoading(false);
+      showToast(result.message || "Erro ao fazer login com Google", "error");
+    }
+  };
+
   return (
     <KeyboardAvoidingView 
       style={{ flex: 1 }}
@@ -66,63 +106,84 @@ const CadastrarUsuario = ({ navigation }) => {
       <View style={estilos.container}>
         <Image 
           source={require("../assets/images/fundo1.png")} 
-          style={estilos.image} 
+          style={estilos.image}
+          fadeDuration={0}
         />
 
-        <Text style={estilos.texto}>Cadastrar {"\n"}usuário</Text>
+        <View style={estilos.espacoSuperior} />
 
-        <TextInput
-          style={estilos.input}
-          placeholder="Nome"
-          value={nome}
-          onChangeText={setNome}
-        />
+        <View style={estilos.conteudoInferior}>
+          <Text style={estilos.texto}>Cadastrar {"\n"}usuário</Text>
 
-        <TextInput
-          style={estilos.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-
-        <View style={estilos.inputSenhaContainer}>
           <TextInput
-            style={estilos.inputSenha}
-            placeholder="Senha (mínimo 6 caracteres)"
-            value={senha}
-            onChangeText={setSenha}
-            secureTextEntry={!mostrarSenha}
+            style={estilos.input}
+            placeholder="Nome"
+            value={nome}
+            onChangeText={setNome}
           />
-          <TouchableOpacity 
-            style={estilos.botaoOlho}
-            onPress={() => setMostrarSenha(!mostrarSenha)}
-          >
-            <Ionicons 
-              name={mostrarSenha ? "eye-off-outline" : "eye-outline"} 
-              size={22} 
-              color="#666" 
+
+          <TextInput
+            style={estilos.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          <View style={estilos.inputSenhaContainer}>
+            <TextInput
+              style={estilos.inputSenha}
+              placeholder="Senha (mínimo 6 caracteres)"
+              value={senha}
+              onChangeText={setSenha}
+              secureTextEntry={!mostrarSenha}
             />
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity 
+              style={estilos.botaoOlho}
+              onPress={() => setMostrarSenha(!mostrarSenha)}
+            >
+              <Ionicons 
+                name={mostrarSenha ? "eye-off-outline" : "eye-outline"} 
+                size={22} 
+                color="#666" 
+              />
+            </TouchableOpacity>
+          </View>
 
-        <View style={estilos.areaInferior}>
-          <TouchableOpacity 
-            style={estilos.botaoCriar} 
-            onPress={handleCriar}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={estilos.textoCadastrar}>Criar</Text>
-            )}
-          </TouchableOpacity>
+          <View style={estilos.areaInferior}>
+            <TouchableOpacity 
+              style={estilos.botaoCriar} 
+              onPress={handleCriar}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={estilos.textoCadastrar}>Criar</Text>
+              )}
+            </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleCancelar} style={estilos.botaoCancelar}>
-            <Text style={estilos.textoCancelar}>Cancelar</Text>
-          </TouchableOpacity>
+            <View style={estilos.divisor}>
+              <View style={estilos.linha} />
+              <Text style={estilos.textoDivisor}>ou</Text>
+              <View style={estilos.linha} />
+            </View>
+
+            <TouchableOpacity 
+              style={estilos.botaoGoogle}
+              onPress={handleGoogleLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              <GoogleIcon size={20} />
+              <Text style={estilos.textoBotaoGoogle}>Entrar com Google</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleCancelar} style={estilos.botaoCancelar}>
+              <Text style={estilos.textoCancelar}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -134,9 +195,7 @@ export default CadastrarUsuario;
 const estilos = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f5f5f5", // Cor de fundo enquanto carrega
   },
   image: {
     position: "absolute",
@@ -146,14 +205,20 @@ const estilos = StyleSheet.create({
     height: 500,
     resizeMode: "cover",
   },
+  espacoSuperior: {
+    flex: 0.85,
+  },
+  conteudoInferior: {
+    alignItems: "center",
+    paddingBottom: 60,
+  },
   texto: {
     fontSize: 50,
     fontFamily: "Raleway-Bold",
-    paddingRight: 120,
-    paddingHorizontal: 30,
     paddingBottom: 25,
     alignSelf: "flex-start",
     marginLeft: 20,
+    flexShrink: 0,
   },
   input: {
     backgroundColor: "#f1f1f1",
@@ -188,18 +253,54 @@ const estilos = StyleSheet.create({
   },
   areaInferior: {
     alignItems: "center",
-    marginTop: 25,
+    marginTop: 40,
     gap: 10,
+    width: "86%",
   },
   botaoCriar: {
     backgroundColor: "#b20000",
     paddingVertical: 16,
-    paddingHorizontal: 145,
+    width: "100%",
     borderRadius: 20,
   },
   textoCadastrar: {
     color: "#fff",
     fontSize: 20,
+    fontFamily: "NunitoSans-Light",
+    textAlign: "center",
+  },
+  divisor: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    marginVertical: 12,
+  },
+  linha: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ccc",
+  },
+  textoDivisor: {
+    marginHorizontal: 10,
+    fontSize: 14,
+    color: "#666",
+    fontFamily: "NunitoSans-Light",
+  },
+  botaoGoogle: {
+    backgroundColor: "#fff",
+    width: "100%",
+    height: 48,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  textoBotaoGoogle: {
+    color: "#333",
+    fontSize: 15,
     fontFamily: "NunitoSans-Light",
   },
   botaoCancelar: {
