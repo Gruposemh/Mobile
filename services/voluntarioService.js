@@ -26,3 +26,27 @@ export const tornarVoluntario = async (dados) => {
     };
   }
 };
+
+export const solicitarCancelamento = async () => {
+  try {
+    const response = await api.post('/voluntario/solicitar-cancelamento');
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Erro ao solicitar cancelamento',
+    };
+  }
+};
+
+export const confirmarCancelamento = async (codigo) => {
+  try {
+    const response = await api.post('/voluntario/confirmar-cancelamento', { codigo });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Erro ao confirmar cancelamento',
+    };
+  }
+};

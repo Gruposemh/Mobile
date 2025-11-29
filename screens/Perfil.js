@@ -8,21 +8,18 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { verificarVoluntario } from "../services/voluntarioService";
 import ModalEmDesenvolvimento from "../components/ModalEmDesenvolvimento";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Perfil = ({ navigation }) => {
   const { user, signOut } = useAuth();
   const [loading, setLoading] = useState(true);
   const [voluntarioInfo, setVoluntarioInfo] = useState(null);
   const [modalChatOpen, setModalChatOpen] = useState(false);
-  const [notificacoesAtivas, setNotificacoesAtivas] = useState(true);
 
   // Carrega os dados toda vez que a tela recebe foco
   useFocusEffect(
@@ -36,12 +33,6 @@ const Perfil = ({ navigation }) => {
               setVoluntarioInfo(result.data);
             }
           }
-          
-          // Carregar preferência de notificações
-          const notifPreference = await AsyncStorage.getItem('notificacoesAtivas');
-          if (notifPreference !== null) {
-            setNotificacoesAtivas(notifPreference === 'true');
-          }
         } catch (error) {
           console.log("Erro ao carregar dados:", error);
         } finally {
@@ -51,17 +42,6 @@ const Perfil = ({ navigation }) => {
       carregarDados();
     }, [user])
   );
-
-  const toggleNotificacoes = async (value) => {
-    setNotificacoesAtivas(value);
-    await AsyncStorage.setItem('notificacoesAtivas', value.toString());
-    
-    if (value) {
-      Alert.alert("Notificações Ativadas", "Você receberá emails sobre inscrições e cancelamentos.");
-    } else {
-      Alert.alert("Notificações Desativadas", "Você não receberá mais emails sobre inscrições e cancelamentos.");
-    }
-  };
 
   const sairDaConta = async () => {
     Alert.alert("Sair da conta", "Tem certeza que deseja sair?", [
@@ -111,8 +91,8 @@ const Perfil = ({ navigation }) => {
         <View style={styles.perfilContainer}>
           <Image
             source={
-              user?.foto
-                ? { uri: user.foto }
+              user?.imagemPerfil
+                ? { uri: user.imagemPerfil }
                 : require("../assets/images/logoPerfil.png")
             }
             style={styles.foto}
@@ -155,6 +135,21 @@ const Perfil = ({ navigation }) => {
           
           <TouchableOpacity
             style={styles.opcao}
+            onPress={() => navigation.navigate("EditarPerfil")}
+          >
+            <View style={styles.opcaoEsquerda}>
+              <Ionicons
+                name="create-outline"
+                size={22}
+                color="#000000ff"
+              />
+              <Text style={styles.textoOpcao}>Editar Perfil</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.opcao}
             onPress={() => {
               navigation.navigate("Informacoes"); 
               console.log("Navegando para Informações Pessoais!");
@@ -173,26 +168,31 @@ const Perfil = ({ navigation }) => {
 
           <View style={styles.linhaOpcao} />
 
-          {/* Toggle de Notificações */}
-          <View style={styles.opcao}>
-            <View style={styles.opcaoEsquerda}>
-              <Ionicons
-                name="notifications-outline"
-                size={22}
-                color="#000000ff"
-              />
-              <Text style={styles.textoOpcao}>Notificações por Email</Text>
-            </View>
-            <Switch
-              value={notificacoesAtivas}
-              onValueChange={toggleNotificacoes}
-              trackColor={{ false: "#d3d3d3", true: "#ffcccb" }}
-              thumbColor={notificacoesAtivas ? "#b20000" : "#f4f3f4"}
-              ios_backgroundColor="#d3d3d3"
-            />
-          </View>
-
-          <View style={styles.linhaOpcao} />
+          {/* Voluntariado */}
+          {voluntarioInfo && voluntarioInfo.status === 'APROVADO' && (
+            <>
+              <Text style={[styles.tituloSecao, { marginTop: 50 }]}>
+                Voluntariado
+              </Text>
+              <TouchableOpacity
+                style={styles.opcao}
+                onPress={() => navigation.navigate("CancelarVoluntariado")}
+              >
+                <View style={styles.opcaoEsquerda}>
+                  <Ionicons
+                    name="close-circle-outline"
+                    size={22}
+                    color="#dc3545"
+                  />
+                  <Text style={[styles.textoOpcao, { color: '#dc3545' }]}>
+                    Cancelar Voluntariado
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#dc3545" />
+              </TouchableOpacity>
+              <View style={styles.linhaOpcao} />
+            </>
+          )}
 
           {/* Preciso de ajuda */}
           <Text style={[styles.tituloSecao, { marginTop: 50 }]}>

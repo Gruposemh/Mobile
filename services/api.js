@@ -1,10 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// IMPORTANTE: URL do back-end em produção
-// Para desenvolvimento local, use: http://192.168.15.14:8080
-// Para produção, use a URL do Azure
-const API_URL = 'https://ong-a2hzbucweddredb7.brazilsouth-01.azurewebsites.net';
+import { API_URL } from '../config/api.config';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -17,7 +13,7 @@ const api = axios.create({
 // Interceptor para adicionar token em todas as requisições
 api.interceptors.request.use(
   async (config) => {
-    console.log(`🌐 ${config.method.toUpperCase()} ${config.url}`);
+    console.log(`🌐 ${config.method.toUpperCase()} ${API_URL}${config.url}`);
     const token = await AsyncStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -37,10 +33,17 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // Não logar erros 404 em /voluntario/usuario (é esperado quando usuário não é voluntário)
+    const isVoluntarioCheck = error.config?.url?.includes('/voluntario/usuario/');
+    const is404 = error.response?.status === 404;
+    
     if (error.response) {
-      console.error(`❌ Response Error ${error.response.status}:`, error.response.data);
+      // Só logar se não for um 404 esperado
+      if (!(is404 && isVoluntarioCheck)) {
+        console.error(`❌ Response Error ${error.response.status} em ${error.config?.url}:`, error.response.data);
+      }
     } else if (error.request) {
-      console.error('❌ Network Error - Sem resposta do servidor');
+      console.error('❌ Network Error - Sem resposta do servidor para:', error.config?.url);
     } else {
       console.error('❌ Error:', error.message);
     }

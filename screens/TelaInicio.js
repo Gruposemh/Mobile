@@ -12,12 +12,14 @@ const TelaInicio = ({ navigation }) => {
 
   return (
     <View style={estilos.container}>
-      <Image
-        source={require('../assets/images/logoOng.png')}
-        style={estilos.logo}
-        resizeMode="contain"
-      />
-      <Text style={estilos.texto}>Voluntários</Text>
+      <View style={estilos.conteudo}>
+        <Image
+          source={require('../assets/images/logoOng.png')}
+          style={estilos.logo}
+          resizeMode="contain"
+        />
+        <Text style={estilos.texto}>Voluntários</Text>
+      </View>
     </View>
   );
 };
@@ -31,12 +33,19 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  conteudo: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 25,
+  },
   logo: {
     width: 124,
     height: 125,
+    marginBottom: 10,
   },
   texto: {
     fontSize: 46,
     fontFamily: 'Raleway-Bold',
+    textAlign: 'center',
   },
 });

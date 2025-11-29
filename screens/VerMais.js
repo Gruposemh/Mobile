@@ -169,6 +169,7 @@ const VerMais = ({ navigation }) => {
                 }
                 style={styles.eventoImagem}
                 imageStyle={{ borderRadius: 10 }}
+                resizeMode="cover"
                 defaultSource={require("../assets/images/sopa.png")}
                 onError={(error) => {
                   console.log('❌ Erro ao carregar imagem:', evento.nome);

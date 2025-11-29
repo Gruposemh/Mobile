@@ -81,7 +81,7 @@ const Login = ({ navigation }) => {
     const result = await loginWithGoogle();
     
     if (result.success) {
-      const { token, refreshToken, email, role, id, nome } = result.data;
+      const { token, refreshToken, email, role, id, nome, imagemPerfil } = result.data;
       
       console.log('Dados recebidos do Google:', { id, nome, email, role });
       
@@ -90,6 +90,7 @@ const Login = ({ navigation }) => {
         nome: nome,
         email: email,
         role: role,
+        imagemPerfil: imagemPerfil
       };
       
       console.log('Salvando dados do usuário Google:', userData);
@@ -102,10 +103,11 @@ const Login = ({ navigation }) => {
     } else if (result.waiting) {
       // Aguardando deep link - não mostrar erro
       console.log('⏳ Aguardando retorno do navegador...');
+      showToast("Complete o login no navegador", "info");
       // Manter loading por mais tempo
       setTimeout(() => {
         setLoading(false);
-      }, 3000);
+      }, 5000);
     } else {
       setLoading(false);
       showToast(result.message || "Erro ao fazer login com Google", "error");
@@ -134,12 +136,6 @@ const Login = ({ navigation }) => {
         <View style={styles.content}>
           <View style={styles.tituloContainer}>
             <Text style={styles.titulo}>Login</Text>
-            <Image
-              source={require("../assets/images/logoOng.png")}
-              style={styles.logo}
-              resizeMode="contain"
-              fadeDuration={0}
-            />
           </View>
 
           <Text style={styles.subtexto}>Bom te ver de novo!</Text>
@@ -243,16 +239,14 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   tituloContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 10,
-    paddingRight: 130,
+    width: "100%",
     marginTop: 30,
   },
   titulo: {
     fontSize: 50,
     color: "#000000ff",
-    marginRight: 10,
     fontFamily: 'Raleway-Bold',
   },
   logo: {

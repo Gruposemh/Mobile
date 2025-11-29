@@ -26,6 +26,7 @@ import Notificacoes from "./screens/Notificacoes";
 import Informacoes from "./screens/Informacoes";
 import MinhaAgenda from "./screens/MinhaAgenda";
 import TornarVoluntario from "./screens/TornarVoluntario";
+import CancelarVoluntariado from "./screens/CancelarVoluntariado";
 import Atividades from "./screens/Atividades";
 
 const Pilha = createNativeStackNavigator();
@@ -155,6 +156,7 @@ function AppNavigator() {
             <Pilha.Screen name="Informacoes" component={Informacoes} />
             <Pilha.Screen name="MinhaAgenda" component={MinhaAgenda} />
             <Pilha.Screen name="TornarVoluntario" component={TornarVoluntario} />
+            <Pilha.Screen name="CancelarVoluntariado" component={CancelarVoluntariado} />
             <Pilha.Screen name="Atividades" component={Atividades} />
           </>
         )}

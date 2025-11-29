@@ -1,9 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import { Platform, Linking } from 'react-native';
-
-// URL da API - deve ser a mesma do api.js
-const API_URL = 'https://ong-a2hzbucweddredb7.brazilsouth-01.azurewebsites.net';
+import { API_URL } from '../config/api.config';
 
 // Necessário para fechar o navegador após o login
 WebBrowser.maybeCompleteAuthSession();

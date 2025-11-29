@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,9 @@ import {
   Platform,
   ActivityIndicator,
   Image,
+  Alert,
 } from "react-native";
-import { tornarVoluntario } from "../services/voluntarioService";
+import { tornarVoluntario, verificarVoluntario } from "../services/voluntarioService";
 import { useAuth } from "../context/AuthContext";
 import Toast from "../components/Toast";
 import { useToast } from "../hooks/useToast";
@@ -25,6 +26,34 @@ const TornarVoluntario = ({ navigation }) => {
   const [descricao, setDescricao] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast, showToast, hideToast } = useToast();
+
+  // Verificar se já tem pedido pendente ao entrar na tela
+  useEffect(() => {
+    const verificarStatus = async () => {
+      if (user?.id) {
+        const result = await verificarVoluntario(user.id);
+        if (result.success && result.isVoluntario) {
+          const status = result.data.status;
+          
+          if (status === 'PENDENTE') {
+            Alert.alert(
+              "Pedido em Análise",
+              "Você já possui um pedido para se tornar voluntário em análise. Aguarde a aprovação.",
+              [{ text: "OK", onPress: () => navigation.goBack() }]
+            );
+          } else if (status === 'APROVADO') {
+            Alert.alert(
+              "Já é Voluntário",
+              "Você já é um voluntário aprovado!",
+              [{ text: "OK", onPress: () => navigation.goBack() }]
+            );
+          }
+        }
+      }
+    };
+    
+    verificarStatus();
+  }, [user, navigation]);
 
   const handleCpfChange = (text) => {
     const numeros = text.replace(/\D/g, '');
@@ -150,8 +179,14 @@ const TornarVoluntario = ({ navigation }) => {
     } else {
       // Melhorar mensagem de erro
       let mensagem = result.message;
-      if (mensagem.includes("18 anos") || mensagem.includes("constraint")) {
+      if (mensagem.includes("CPF inválido")) {
+        mensagem = "CPF inválido. Verifique o número digitado e tente novamente.";
+      } else if (mensagem.includes("18 anos") || mensagem.includes("constraint")) {
         mensagem = "Você precisa ter mais de 18 anos para se tornar voluntário.";
+      } else if (mensagem.includes("em análise") || mensagem.includes("PENDENTE")) {
+        mensagem = "Você já possui um pedido para se tornar voluntário em análise. Aguarde a aprovação.";
+      } else if (mensagem.includes("já é um voluntário")) {
+        mensagem = "Você já é um voluntário aprovado.";
       }
       showToast(mensagem, "error");
     }

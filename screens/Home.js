@@ -266,6 +266,7 @@ const Home = ({ navigation }) => {
                     }
                     style={styles.card}
                     imageStyle={{ borderRadius: 10 }}
+                    resizeMode="cover"
                     defaultSource={require("../assets/images/sopa.png")}
                     onError={(error) => {
                       console.log('❌ Erro ao carregar imagem do evento:', evento.nome, error.nativeEvent.error);
@@ -317,6 +318,7 @@ const Home = ({ navigation }) => {
                     }
                     style={styles.card}
                     imageStyle={{ borderRadius: 10 }}
+                    resizeMode="cover"
                     defaultSource={require("../assets/images/sopa.png")}
                   >
                     <View style={styles.overlay}>
@@ -517,7 +519,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  foto1: {
+    width: 320,
+    height: 180,
+    marginTop: 20,
+  },
   foto: {
+    width: 320,
+    height: 180,
     marginTop: 20,
     marginBottom: 100,
   },

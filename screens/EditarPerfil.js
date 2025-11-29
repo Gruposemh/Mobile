@@ -1,234 +1,288 @@
-import React, { useEffect, useState } from "react";
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Image, 
-  ScrollView, 
-  Alert 
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { useAuth } from '../context/AuthContext';
+import { editarPerfil, uploadImagemPerfil } from '../services/usuarioService';
+import { verificarVoluntario } from '../services/voluntarioService';
+import Toast from '../components/Toast';
+import { useToast } from '../hooks/useToast';
 
 const EditarPerfil = ({ navigation }) => {
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [cpf, setCpf] = useState("");  // Para armazenar o CPF, mas não exibir ou editar
+  const { user, updateUser } = useAuth();
+  const [nome, setNome] = useState(user?.nome || '');
+  const [telefone, setTelefone] = useState('');
+  const [endereco, setEndereco] = useState('');
+  const [imagemPerfil, setImagemPerfil] = useState(user?.imagemPerfil || null);
+  const [isVoluntario, setIsVoluntario] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingImage, setLoadingImage] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
-    const carregarDados = async () => {
-      try {
-        const dados = await AsyncStorage.getItem("usuario");
-        if (dados) {
-          const usuario = JSON.parse(dados);
-          setNome(usuario.nome || "");
-          setEmail(usuario.email || "");
-          setTelefone(usuario.telefone || "");
-          setCpf(usuario.cpf || "");  // Carregar o CPF para manter no estado
-        }
-      } catch (error) {
-        console.log("Erro ao carregar dados:", error);
-      }
-    };
     carregarDados();
   }, []);
 
-  const salvarAlteracoes = async () => {
-    // Verificar se os campos estão preenchidos
-    if (!nome || !email || !telefone) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
+  const carregarDados = async () => {
+    // Verificar se é voluntário APROVADO
+    const result = await verificarVoluntario(user.id);
+    if (result.success && result.isVoluntario && result.data.status === 'APROVADO') {
+      setIsVoluntario(true);
+      setTelefone(result.data.telefone || '');
+      setEndereco(result.data.endereco || '');
+    } else {
+      setIsVoluntario(false);
+    }
+  };
+
+  const selecionarImagem = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      showToast('Permissão negada para acessar galeria', 'error');
       return;
     }
 
-    try {
-      // Ao salvar, manter o CPF intacto
-      const novoUsuario = { nome, email, telefone, cpf };  // CPF não é alterado
-      await AsyncStorage.setItem("usuario", JSON.stringify(novoUsuario));
-      Alert.alert("Sucesso!", "Alterações salvas.");
-      navigation.goBack(); // Volta para a tela anterior, que é o "Perfil"
-    } catch (error) {
-      console.log("Erro ao salvar alterações:", error);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      await uploadImagem(result.assets[0]);
     }
   };
 
-  const excluirConta = async () => {
-    Alert.alert("Confirmar exclusão", "Deseja realmente excluir sua conta?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Excluir",
-        style: "destructive",
-        onPress: async () => {
-          await AsyncStorage.removeItem("usuario");
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Login" }],
-          });
-        },
-      },
-    ]);
+  const uploadImagem = async (imageAsset) => {
+    setLoadingImage(true);
+    const uploadResult = await uploadImagemPerfil(imageAsset);
+    setLoadingImage(false);
+
+    if (uploadResult.success) {
+      setImagemPerfil(uploadResult.url);
+      showToast('Imagem carregada com sucesso!', 'success');
+    } else {
+      showToast(uploadResult.message, 'error');
+    }
+  };
+
+  const handleSalvar = async () => {
+    if (!nome || nome.trim() === '') {
+      showToast('Nome é obrigatório', 'error');
+      return;
+    }
+
+    setLoading(true);
+    const dados = {
+      nome: nome.trim(),
+      imagemPerfil,
+    };
+
+    if (isVoluntario) {
+      dados.telefone = telefone;
+      dados.endereco = endereco;
+    }
+
+    const result = await editarPerfil(dados);
+    setLoading(false);
+
+    if (result.success) {
+      // Atualizar dados do usuário no contexto
+      await updateUser({
+        ...user,
+        nome: nome.trim(),
+        imagemPerfil,
+      });
+      
+      showToast('Perfil atualizado com sucesso!', 'success');
+      setTimeout(() => navigation.goBack(), 1500);
+    } else {
+      showToast(result.message, 'error');
+    }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={{ fontSize: 29 }}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Editar Perfil</Text>
-      </View>
-
-      <View style={styles.separator} />
-
-      <Image
-        source={require("../assets/images/editar.png")}
-        style={styles.fotoApp}
-        resizeMode="cover"
+    <ScrollView style={styles.container}>
+      <Toast
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={hideToast}
       />
 
-      {/* Formulário */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.voltarButton}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.titulo}>Editar Perfil</Text>
+      </View>
+
+      <View style={styles.imagemContainer}>
+        <TouchableOpacity onPress={selecionarImagem} style={styles.imagemWrapper}>
+          {loadingImage ? (
+            <View style={styles.imagemPerfil}>
+              <ActivityIndicator size="large" color="#b20000" />
+            </View>
+          ) : imagemPerfil ? (
+            <Image source={{ uri: imagemPerfil }} style={styles.imagemPerfil} />
+          ) : (
+            <View style={styles.imagemPerfil}>
+              <Ionicons name="person" size={60} color="#999" />
+            </View>
+          )}
+          <View style={styles.editarIcone}>
+            <Ionicons name="camera" size={20} color="#fff" />
+          </View>
+        </TouchableOpacity>
+        <Text style={styles.imagemTexto}>Toque para alterar foto</Text>
+      </View>
+
       <View style={styles.form}>
-        {/* Nome */}
         <Text style={styles.label}>Nome</Text>
         <TextInput
           style={styles.input}
-          placeholder="Digite seu nome"
           value={nome}
           onChangeText={setNome}
+          placeholder="Seu nome"
+          placeholderTextColor="#999"
         />
-        <View style={styles.underline} />
 
-        {/* Email */}
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Digite seu email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <View style={styles.underline} />
+        {isVoluntario && (
+          <>
+            <Text style={styles.label}>Telefone</Text>
+            <TextInput
+              style={styles.input}
+              value={telefone}
+              onChangeText={setTelefone}
+              placeholder="(00) 00000-0000"
+              placeholderTextColor="#999"
+              keyboardType="phone-pad"
+            />
 
-        {/* Telefone */}
-        <Text style={styles.label}>Telefone</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Digite seu telefone"
-          value={telefone}
-          onChangeText={setTelefone}
-          keyboardType="phone-pad"
-        />
-        <View style={styles.underline} />
+            <Text style={styles.label}>Endereço</Text>
+            <TextInput
+              style={[styles.input, styles.inputMultiline]}
+              value={endereco}
+              onChangeText={setEndereco}
+              placeholder="Seu endereço completo"
+              placeholderTextColor="#999"
+              multiline
+              numberOfLines={3}
+            />
+          </>
+        )}
 
-        {/* Não exibir o CPF */}
-        {/* Não incluímos o CPF aqui */}
-
-        <View style={{ alignItems: "center" }}>
-          {/* Botão salvar alterações */}
-          <TouchableOpacity
-            style={styles.botaoSalvar}
-            onPress={salvarAlteracoes}
-          >
-            <Text style={styles.textoBotao}>Salvar Alterações</Text>
-          </TouchableOpacity>
-
-          {/* Botão excluir conta */}
-          <TouchableOpacity style={styles.botaoExcluir} onPress={excluirConta}>
-            <Text style={styles.textoExcluir}>Excluir Conta</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.botaoSalvar, loading && styles.botaoDesabilitado]}
+          onPress={handleSalvar}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.botaoTexto}>Salvar Alterações</Text>
+          )}
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 };
 
-export default EditarPerfil;
-
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    backgroundColor: "#fff",
-    flexGrow: 1,
+    flex: 1,
+    backgroundColor: '#fff',
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  voltarButton: {
+    marginRight: 15,
+  },
+  titulo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    fontFamily: 'Raleway-Bold',
+  },
+  imagemContainer: {
+    alignItems: 'center',
+    paddingVertical: 30,
+  },
+  imagemWrapper: {
+    position: 'relative',
+  },
+  imagemPerfil: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editarIcone: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#b20000',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  imagemTexto: {
     marginTop: 10,
-  },
-  backButton: {
-    position: "absolute",
-    left: 0,
-    size: 28,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#000000ff",
-    fontFamily: "Raleway-Bold",
-    marginTop: 10,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "#ccc",
-    marginVertical: 20,
-  },
-  fotoApp: {
-    width: "100%",
-    height: 160,
-    borderRadius: 0,
-    marginBottom: 20,
+    color: '#666',
+    fontSize: 14,
+    fontFamily: 'NunitoSans-Light',
   },
   form: {
-    flex: 1,
+    padding: 20,
   },
   label: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 5,
-    fontFamily: "NunitoSans-Light",
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#333',
+    fontFamily: 'Raleway-Bold',
   },
   input: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    padding: 15,
     fontSize: 16,
-    paddingVertical: 6,
-    color: "#000",
+    marginBottom: 20,
+    fontFamily: 'NunitoSans-Light',
   },
-  underline: {
-    height: 1,
-    backgroundColor: "#ccc",
-    marginBottom: 15,
+  inputMultiline: {
+    height: 80,
+    textAlignVertical: 'top',
   },
   botaoSalvar: {
-    borderWidth: 1,
-    borderColor: "#b20000",
-    paddingVertical: 5,
+    backgroundColor: '#b20000',
     borderRadius: 10,
-    alignItems: "center",
-    marginTop: 20,
-    width: 170,
+    padding: 18,
+    alignItems: 'center',
+    marginTop: 10,
   },
-  textoBotao: {
-    color: "#b20000",
-    fontSize: 15,
-    fontWeight: "bold",
+  botaoDesabilitado: {
+    opacity: 0.6,
   },
-  botaoExcluir: {
-    marginTop: 200,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  textoExcluir: {
-    color: "#b20000",
-    fontSize: 16,
-    fontWeight: "bold",
+  botaoTexto: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'Raleway-Bold',
   },
 });
+
+export default EditarPerfil;
