@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Image,
@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import MenuModal from "../components/Menu";
 import EventoModal from "../components/EventoModal";
 import { useAuth } from "../context/AuthContext";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { listarEventos, listarParticipacoes, inscreverEvento } from "../services/eventosService";
 
 const VerMais = ({ navigation }) => {  
@@ -27,11 +28,7 @@ const VerMais = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    carregarDados();
-  }, []);
-
-  const carregarDados = async () => {
+  const carregarDados = useCallback(async () => {
     try {
       // Buscar eventos
       const eventosResult = await listarEventos();
@@ -51,7 +48,14 @@ const VerMais = ({ navigation }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user.id]);
+
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
+
+  // Auto-refresh a cada 30 segundos
+  useAutoRefresh(carregarDados, 30000);
 
   const onRefresh = () => {
     setRefreshing(true);

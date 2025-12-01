@@ -37,22 +37,48 @@ api.interceptors.response.use(
     const isVoluntarioCheck = error.config?.url?.includes('/voluntario/usuario/');
     const is404 = error.response?.status === 404;
     
-    if (error.response) {
-      // Só logar se não for um 404 esperado
-      if (!(is404 && isVoluntarioCheck)) {
-        console.error(`❌ Response Error ${error.response.status} em ${error.config?.url}:`, error.response.data);
+    // Tratamento de erros de rede
+    if (!error.response) {
+      if (error.code === 'ECONNABORTED') {
+        error.message = 'Tempo de conexão esgotado. Verifique sua internet.';
+      } else if (error.message === 'Network Error') {
+        error.message = 'Erro de conexão. Verifique sua internet.';
       }
-    } else if (error.request) {
-      console.error('❌ Network Error - Sem resposta do servidor para:', error.config?.url);
-    } else {
-      console.error('❌ Error:', error.message);
+      console.error('❌ Network Error:', error.message);
+      return Promise.reject(error);
     }
     
-    if (error.response?.status === 401) {
-      // Token expirado - fazer logout
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('user');
+    // Só logar se não for um 404 esperado
+    if (!(is404 && isVoluntarioCheck)) {
+      console.error(`❌ Response Error ${error.response.status} em ${error.config?.url}:`, error.response.data);
     }
+    
+    // Tratamento de erros específicos
+    const status = error.response.status;
+    
+    switch (status) {
+      case 401:
+        // Token expirado - fazer logout
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('user');
+        error.message = 'Sessão expirada. Faça login novamente.';
+        break;
+      case 403:
+        error.message = 'Você não tem permissão para realizar esta ação.';
+        break;
+      case 404:
+        if (!isVoluntarioCheck) {
+          error.message = 'Recurso não encontrado.';
+        }
+        break;
+      case 500:
+        error.message = 'Erro no servidor. Tente novamente mais tarde.';
+        break;
+      case 503:
+        error.message = 'Serviço temporariamente indisponível.';
+        break;
+    }
+    
     return Promise.reject(error);
   }
 );

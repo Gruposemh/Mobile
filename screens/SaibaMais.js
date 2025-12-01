@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import MenuModal from "../components/Menu"; 
+import MenuModal from "../components/Menu";
+import { useAuth } from "../context/AuthContext"; 
 const SaibaMais = ({ navigation }) => { 
+  const { isVoluntario } = useAuth();
   const [isModalVisible, setModalVisible] = useState(false);
        const toggleModal = () => {
       console.log(" Alternando menu. Visível?", !isModalVisible);
@@ -92,13 +94,15 @@ return (
                            />
                            </TouchableOpacity>
                            
-                   <TouchableOpacity onPress={handleEventos}>
-                     <Image
-                        source={require('../assets/images/Component 26.png')}
-                            style={styles.ultima}
-                            resizeMode="contain"
-                           />
-                           </TouchableOpacity>
+                   {!isVoluntario && (
+                     <TouchableOpacity onPress={handleEventos}>
+                       <Image
+                          source={require('../assets/images/Component 26.png')}
+                              style={styles.ultima}
+                              resizeMode="contain"
+                             />
+                             </TouchableOpacity>
+                   )}
                  </View>
       </View>
          <MenuModal visible={isModalVisible} onClose={toggleModal} />

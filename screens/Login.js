@@ -136,9 +136,8 @@ const Login = ({ navigation }) => {
         <View style={styles.content}>
           <View style={styles.tituloContainer}>
             <Text style={styles.titulo}>Login</Text>
+            <Text style={styles.subtexto}>Bom te ver de novo!</Text>
           </View>
-
-          <Text style={styles.subtexto}>Bom te ver de novo!</Text>
 
           <TextInput
             style={styles.input}
@@ -240,14 +239,15 @@ const styles = StyleSheet.create({
   },
   tituloContainer: {
     alignItems: "flex-start",
-    marginBottom: 10,
-    width: "100%",
+    marginBottom: 15,
+    width: "90%",
     marginTop: 30,
   },
   titulo: {
     fontSize: 50,
     color: "#000000ff",
     fontFamily: 'Raleway-Bold',
+    marginBottom: 10,
   },
   logo: {
     width: 50,
@@ -256,8 +256,6 @@ const styles = StyleSheet.create({
   subtexto: {
     fontSize: 19,
     color: "#000000ff",
-    marginBottom: 15,
-    paddingRight: 159,
     fontFamily: 'NunitoSans-Light',
   },
   input: {

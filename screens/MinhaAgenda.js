@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Image,
@@ -13,23 +13,26 @@ import {
 } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import MenuModal from "../components/Menu";
+import EventoInfoModal from "../components/EventoInfoModal";
+import AtividadeInfoModal from "../components/AtividadeInfoModal";
 import { useAuth } from "../context/AuthContext";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { listarParticipacoes, cancelarInscricao, confirmarPresenca } from "../services/eventosService";
 import { listarInscricoes, cancelarInscricao as cancelarInscricaoAtividade } from "../services/atividadesService";
 
 const MinhaAgenda = ({ navigation }) => {  
-  const { user } = useAuth();
+  const { user, isVoluntario } = useAuth();
   const [isModalVisible, setModalVisible] = useState(false);
+  const [eventoModalVisible, setEventoModalVisible] = useState(false);
+  const [atividadeModalVisible, setAtividadeModalVisible] = useState(false);
+  const [eventoSelecionado, setEventoSelecionado] = useState(null);
+  const [atividadeSelecionada, setAtividadeSelecionada] = useState(null);
   const [eventosInscritos, setEventosInscritos] = useState([]);
   const [atividadesInscritas, setAtividadesInscritas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    carregarDados();
-  }, []);
-
-  const carregarDados = async () => {
+  const carregarDados = useCallback(async () => {
     try {
       const eventosResult = await listarParticipacoes(user.id);
       if (eventosResult.success) {
@@ -46,7 +49,14 @@ const MinhaAgenda = ({ navigation }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user.id]);
+
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
+
+  // Auto-refresh a cada 30 segundos
+  useAutoRefresh(carregarDados, 30000);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -55,6 +65,31 @@ const MinhaAgenda = ({ navigation }) => {
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
+  };
+
+  const handleAbrirEvento = (participacao) => {
+    setEventoSelecionado({
+      id: participacao.idEvento,
+      nome: participacao.nomeEvento,
+      descricao: participacao.descricaoEvento || "Sem descrição disponível",
+      data: participacao.dataEvento,
+      local: participacao.localEvento || "Local a definir",
+      imagemUrl: participacao.imagemUrl
+    });
+    setEventoModalVisible(true);
+  };
+
+  const handleAbrirAtividade = (inscricao) => {
+    setAtividadeSelecionada({
+      id: inscricao.idCurso,
+      titulo: inscricao.nomeCurso,
+      descricao: inscricao.descricaoCurso || "Sem descrição disponível",
+      dias: inscricao.diasCurso,
+      horario: inscricao.horarioCurso,
+      vagas: inscricao.vagasCurso || 0,
+      imagem: inscricao.imagemCurso
+    });
+    setAtividadeModalVisible(true);
   };
 
   const handleCancelarInscricao = (participacaoId, nomeEvento) => {
@@ -179,7 +214,12 @@ const MinhaAgenda = ({ navigation }) => {
       ) : (
         <View style={styles.eventosContainer}>
           {eventosInscritos.map((participacao) => (
-            <View key={participacao.id} style={styles.eventoCard}>
+            <TouchableOpacity 
+              key={participacao.id} 
+              style={styles.eventoCard}
+              onPress={() => handleAbrirEvento(participacao)}
+              activeOpacity={0.7}
+            >
               <ImageBackground
                 source={
                   participacao.imagemUrl 
@@ -220,7 +260,10 @@ const MinhaAgenda = ({ navigation }) => {
               <View style={styles.botoesContainer}>
                 <TouchableOpacity
                   style={[styles.botaoAcao, styles.botaoCancelar]}
-                  onPress={() => handleCancelarInscricao(participacao.id, participacao.nomeEvento)}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleCancelarInscricao(participacao.id, participacao.nomeEvento);
+                  }}
                 >
                   <Text style={styles.textoBotaoCancelar}>Cancelar</Text>
                 </TouchableOpacity>
@@ -228,13 +271,16 @@ const MinhaAgenda = ({ navigation }) => {
                 {!participacao.confirmado && (
                   <TouchableOpacity
                     style={[styles.botaoAcao, styles.botaoConfirmar]}
-                    onPress={() => handleConfirmarPresenca(participacao.id, participacao.nomeEvento)}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleConfirmarPresenca(participacao.id, participacao.nomeEvento);
+                    }}
                   >
                     <Text style={styles.textoBotaoConfirmar}>Confirmar</Text>
                   </TouchableOpacity>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       )}
@@ -259,7 +305,12 @@ const MinhaAgenda = ({ navigation }) => {
       ) : (
         <View style={styles.eventosContainer}>
           {atividadesInscritas.map((inscricao) => (
-            <View key={inscricao.id} style={styles.eventoCard}>
+            <TouchableOpacity 
+              key={inscricao.id} 
+              style={styles.eventoCard}
+              onPress={() => handleAbrirAtividade(inscricao)}
+              activeOpacity={0.7}
+            >
               <ImageBackground
                 source={
                   inscricao.imagemCurso 
@@ -289,12 +340,15 @@ const MinhaAgenda = ({ navigation }) => {
               <View style={styles.botoesContainer}>
                 <TouchableOpacity
                   style={[styles.botaoAcao, styles.botaoCancelar]}
-                  onPress={() => handleCancelarInscricaoAtividade(inscricao.id, inscricao.nomeCurso)}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleCancelarInscricaoAtividade(inscricao.id, inscricao.nomeCurso);
+                  }}
                 >
                   <Text style={styles.textoBotaoCancelar}>Cancelar</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       )}
@@ -313,6 +367,18 @@ const MinhaAgenda = ({ navigation }) => {
       <View style={{ height: 80 }} />
 
       <MenuModal visible={isModalVisible} onClose={toggleModal} />
+      
+      <EventoInfoModal
+        visible={eventoModalVisible}
+        evento={eventoSelecionado}
+        onClose={() => setEventoModalVisible(false)}
+      />
+
+      <AtividadeInfoModal
+        visible={atividadeModalVisible}
+        atividade={atividadeSelecionada}
+        onClose={() => setAtividadeModalVisible(false)}
+      />
     </ScrollView>
   );
 };

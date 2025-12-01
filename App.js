@@ -6,6 +6,7 @@ import { ActivityIndicator, View, Linking, Image } from "react-native";
 import { Asset } from 'expo-asset';
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import * as WebBrowser from 'expo-web-browser';
+import ErrorBoundary from "./components/ErrorBoundary";
 
 import TelaInicio from "./screens/TelaInicio";
 import TelaInicioDois from "./screens/TelaInicioDois";
@@ -216,8 +217,10 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <AppNavigator />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

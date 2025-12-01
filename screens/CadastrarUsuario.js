@@ -113,11 +113,14 @@ const CadastrarUsuario = ({ navigation }) => {
         <View style={estilos.espacoSuperior} />
 
         <View style={estilos.conteudoInferior}>
-          <Text style={estilos.texto}>Cadastrar {"\n"}usuário</Text>
+          <View style={estilos.tituloContainer}>
+            <Text style={estilos.texto}>Cadastrar {"\n"}usuário</Text>
+          </View>
 
           <TextInput
             style={estilos.input}
             placeholder="Nome"
+            placeholderTextColor="#aaa"
             value={nome}
             onChangeText={setNome}
           />
@@ -125,6 +128,7 @@ const CadastrarUsuario = ({ navigation }) => {
           <TextInput
             style={estilos.input}
             placeholder="Email"
+            placeholderTextColor="#aaa"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -135,6 +139,7 @@ const CadastrarUsuario = ({ navigation }) => {
             <TextInput
               style={estilos.inputSenha}
               placeholder="Senha (mínimo 6 caracteres)"
+              placeholderTextColor="#aaa"
               value={senha}
               onChangeText={setSenha}
               secureTextEntry={!mostrarSenha}
@@ -195,7 +200,7 @@ export default CadastrarUsuario;
 const estilos = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5", // Cor de fundo enquanto carrega
+    backgroundColor: "#ffffff", // Branco forte igual ao login
   },
   image: {
     position: "absolute",
@@ -212,12 +217,14 @@ const estilos = StyleSheet.create({
     alignItems: "center",
     paddingBottom: 60,
   },
+  tituloContainer: {
+    alignItems: "flex-start",
+    width: "86%",
+    marginBottom: 25,
+  },
   texto: {
     fontSize: 50,
     fontFamily: "Raleway-Bold",
-    paddingBottom: 25,
-    alignSelf: "flex-start",
-    marginLeft: 20,
     flexShrink: 0,
   },
   input: {
@@ -227,7 +234,7 @@ const estilos = StyleSheet.create({
     marginTop: 10,
     borderRadius: 10,
     fontSize: 15,
-    padding: 14,
+    paddingHorizontal: 14,
   },
   inputSenhaContainer: {
     flexDirection: "row",
@@ -242,8 +249,7 @@ const estilos = StyleSheet.create({
     flex: 1,
     height: "100%",
     fontSize: 15,
-    paddingLeft: 14,
-    paddingRight: 10,
+    paddingHorizontal: 14,
   },
   botaoOlho: {
     paddingHorizontal: 12,

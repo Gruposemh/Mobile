@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import MenuModal from "../components/Menu";
 import AtividadeModal from "../components/AtividadeModal";
 import { useAuth } from "../context/AuthContext";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { listarAtividadesDisponiveis, inscreverAtividade } from "../services/atividadesService";
 
 const Atividades = ({ navigation }) => {
@@ -26,11 +27,7 @@ const Atividades = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    carregarDados();
-  }, []);
-
-  const carregarDados = async () => {
+  const carregarDados = useCallback(async () => {
     try {
       // Usar o novo endpoint que já filtra as atividades disponíveis
       const atividadesResult = await listarAtividadesDisponiveis(user.id);
@@ -43,7 +40,14 @@ const Atividades = ({ navigation }) => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user.id]);
+
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
+
+  // Auto-refresh a cada 30 segundos
+  useAutoRefresh(carregarDados, 30000);
 
   const onRefresh = () => {
     setRefreshing(true);

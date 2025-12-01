@@ -1,17 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
+  Image,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 
 const ModalEmDesenvolvimento = ({ visible, onClose, titulo, mensagem }) => {
-  const tituloFinal = titulo || "Sistema de Doações\nem Desenvolvimento";
-  const mensagemFinal = mensagem || "Estamos trabalhando para trazer a você uma experiência completa e segura de doação!";
+  const [copiado, setCopiado] = useState(false);
+  const tituloFinal = titulo || "Doe via PIX";
+  const mensagemFinal = mensagem || "Sua contribuição faz a diferença";
+  const pixCode = "00020126330014BR.GOV.BCB.PIX0111478329968465204000053039865802BR5924Thiago Campos de Resende6009SAO PAULO62140510x0SiJfuUAP6304B6F3";
   
+  const copiarPixCode = async () => {
+    try {
+      await Clipboard.setStringAsync(pixCode);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 3000);
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível copiar o código PIX');
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -21,57 +36,62 @@ const ModalEmDesenvolvimento = ({ visible, onClose, titulo, mensagem }) => {
     >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          {/* Header com gradiente */}
+          
+          {/* Botão Fechar */}
+          <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.8}>
+            <Ionicons name="close" size={24} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Header */}
           <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="construct-outline" size={44} color="#B20000" />
+            <View style={styles.headerIcon}>
+              <Ionicons name="gift" size={32} color="#fff" />
             </View>
             <Text style={styles.title}>{tituloFinal}</Text>
+            <Text style={styles.subtitle}>{mensagemFinal}</Text>
           </View>
 
           {/* Body */}
           <View style={styles.body}>
-            <Text style={styles.message}>
-              {mensagemFinal}
-            </Text>
             
-            {/* Features - só mostra se não for chat */}
+            {/* QR Code */}
             {!titulo && (
               <>
-                <View style={styles.featuresContainer}>
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureIconWrapper}>
-                      <Ionicons name="heart" size={20} color="#B20000" />
-                    </View>
-                    <Text style={styles.featureText}>Doações únicas ou mensais</Text>
-                  </View>
-
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureIconWrapper}>
-                      <Ionicons name="card" size={20} color="#B20000" />
-                    </View>
-                    <Text style={styles.featureText}>Múltiplas formas de pagamento</Text>
-                  </View>
-
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureIconWrapper}>
-                      <Ionicons name="shield-checkmark" size={20} color="#B20000" />
-                    </View>
-                    <Text style={styles.featureText}>Transações 100% seguras</Text>
-                  </View>
+                <Text style={styles.instruction}>Escaneie o QR Code com seu app de pagamento</Text>
+                
+                <View style={styles.qrcodeWrapper}>
+                  <Image 
+                    source={require('../assets/images/qrcode_pix.png')}
+                    style={styles.qrcode}
+                    resizeMode="cover"
+                  />
                 </View>
 
-                <Text style={styles.submessage}>
-                  Enquanto isso, você pode se tornar um voluntário e ajudar de outras formas!
-                </Text>
+                <TouchableOpacity 
+                  style={[styles.copyButton, copiado && styles.copyButtonCopied]}
+                  onPress={copiarPixCode}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons 
+                    name={copiado ? "checkmark-circle" : "copy"} 
+                    size={20} 
+                    color="#fff" 
+                  />
+                  <Text style={styles.copyButtonText}>
+                    {copiado ? "Chave Copiada!" : "Copiar Chave PIX"}
+                  </Text>
+                </TouchableOpacity>
               </>
             )}
           </View>
 
           {/* Footer */}
-          <TouchableOpacity style={styles.button} onPress={onClose} activeOpacity={0.8}>
-            <Text style={styles.buttonText}>Entendi</Text>
-          </TouchableOpacity>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              <Text style={styles.footerBold}>Voluntários Pro Bem</Text> • Fazendo o bem, fazendo a diferença
+            </Text>
+          </View>
+
         </View>
       </View>
     </Modal>
@@ -81,122 +101,133 @@ const ModalEmDesenvolvimento = ({ visible, onClose, titulo, mensagem }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 15,
   },
   modalContainer: {
     backgroundColor: '#fff',
     borderRadius: 20,
-    width: '100%',
-    maxWidth: 380,
+    width: '92%',
+    maxWidth: 420,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 25 },
+    shadowOpacity: 0.3,
     shadowRadius: 30,
     elevation: 15,
     overflow: 'hidden',
   },
+  closeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
   header: {
     backgroundColor: '#B20000',
-    paddingTop: 25,
-    paddingBottom: 20,
+    paddingTop: 35,
+    paddingBottom: 30,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  iconContainer: {
-    width: 75,
-    height: 75,
-    borderRadius: 37.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
+  headerIcon: {
+    width: 56,
+    height: 56,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 28,
     alignItems: 'center',
-    marginBottom: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 6,
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   title: {
-    fontSize: 19,
+    fontSize: 24,
     fontFamily: 'Raleway-Bold',
     color: '#fff',
     textAlign: 'center',
-    lineHeight: 25,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    fontFamily: 'NunitoSans-Light',
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
   },
   body: {
-    paddingHorizontal: 22,
-    paddingTop: 20,
-    paddingBottom: 18,
+    paddingHorizontal: 20,
+    paddingTop: 25,
+    paddingBottom: 20,
   },
-  message: {
-    fontSize: 14.5,
-    fontFamily: 'NunitoSans-Light',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 18,
-    lineHeight: 21,
-    fontWeight: '500',
-  },
-  featuresContainer: {
-    marginBottom: 18,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    marginBottom: 9,
-    borderLeftWidth: 3.5,
-    borderLeftColor: '#B20000',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  featureIconWrapper: {
-    marginRight: 12,
-  },
-  featureText: {
-    fontSize: 13.5,
-    fontFamily: 'NunitoSans-Light',
-    color: '#495057',
-    flex: 1,
-    fontWeight: '500',
-  },
-  submessage: {
-    fontSize: 12,
+  instruction: {
+    fontSize: 13,
     fontFamily: 'NunitoSans-Light',
     color: '#6c757d',
     textAlign: 'center',
-    lineHeight: 18,
-    fontStyle: 'italic',
+    marginBottom: 15,
+    fontWeight: '500',
   },
-  button: {
+  qrcodeWrapper: {
+    backgroundColor: '#f8f9fa',
+    padding: 10,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    width: '100%',
+    height: 300,
+    overflow: 'hidden',
+  },
+  qrcode: {
+    width: 600,
+    height: 600,
+  },
+  copyButton: {
     backgroundColor: '#B20000',
-    marginHorizontal: 22,
-    marginBottom: 22,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
     paddingVertical: 14,
-    borderRadius: 50,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     shadowColor: '#B20000',
-    shadowOffset: { width: 0, height: 5 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 4,
+    marginTop: 5,
   },
-  buttonText: {
+  copyButtonCopied: {
+    backgroundColor: '#28a745',
+    shadowColor: '#28a745',
+  },
+  copyButtonText: {
     color: '#fff',
-    fontSize: 17,
+    fontSize: 15,
     fontFamily: 'Raleway-Bold',
+  },
+  footer: {
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#6c757d',
     textAlign: 'center',
+    lineHeight: 18,
+  },
+  footerBold: {
+    fontWeight: '600',
+    color: '#495057',
   },
 });
 
