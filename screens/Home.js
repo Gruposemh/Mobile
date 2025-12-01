@@ -416,12 +416,14 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginLeft: 21,
     fontFamily: "NunitoSans-Light",
+    color: "#000000",
   },
   titleDois: {
     fontSize: 20,
     marginTop: 10,
     marginLeft: 21,
     fontFamily: "Raleway-Bold",
+    color: "#000000",
   },
   botoes: {
     marginTop: 20,
@@ -472,6 +474,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: 17,
     marginTop: 30,
+    color: "#000000",
   },
   scrollContainer: {
     paddingHorizontal: 10,

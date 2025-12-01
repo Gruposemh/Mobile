@@ -36,7 +36,6 @@ const estilos = StyleSheet.create({
   conteudo: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 25,
   },
   logo: {
     width: 124,
@@ -47,5 +46,6 @@ const estilos = StyleSheet.create({
     fontSize: 46,
     fontFamily: 'Raleway-Bold',
     textAlign: 'center',
+    color: '#000000',
   },
 });

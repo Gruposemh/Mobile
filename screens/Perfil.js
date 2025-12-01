@@ -8,18 +8,35 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { verificarVoluntario } from "../services/voluntarioService";
-import ModalEmDesenvolvimento from "../components/ModalEmDesenvolvimento";
+import { buscarUsuario } from "../services/usuarioService";
 
 const Perfil = ({ navigation }) => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [voluntarioInfo, setVoluntarioInfo] = useState(null);
-  const [modalChatOpen, setModalChatOpen] = useState(false);
+  const [imagemPerfil, setImagemPerfil] = useState(user?.imagemPerfil || null);
+
+  const abrirWhatsApp = async () => {
+    const url = "https://wa.me/5511959247968";
+    try {
+      // Força abrir no navegador externo que depois redireciona para o WhatsApp
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        // Fallback: abre a URL da API do WhatsApp Web
+        await Linking.openURL("https://api.whatsapp.com/send?phone=5511959247968");
+      }
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível abrir o link");
+    }
+  };
 
   // Carrega os dados toda vez que a tela recebe foco
   useFocusEffect(
@@ -28,6 +45,23 @@ const Perfil = ({ navigation }) => {
         try {
           setLoading(true);
           if (user?.id) {
+            // Buscar dados atualizados do usuário
+            const usuarioResult = await buscarUsuario(user.id);
+            if (usuarioResult.success && usuarioResult.data) {
+              const dadosAtualizados = usuarioResult.data;
+              if (dadosAtualizados.imagemPerfil) {
+                setImagemPerfil(dadosAtualizados.imagemPerfil);
+                // Atualizar no contexto também
+                if (dadosAtualizados.imagemPerfil !== user.imagemPerfil) {
+                  await updateUser({
+                    ...user,
+                    imagemPerfil: dadosAtualizados.imagemPerfil,
+                  });
+                }
+              }
+            }
+
+            // Verificar status de voluntário
             const result = await verificarVoluntario(user.id);
             if (result.success && result.isVoluntario) {
               setVoluntarioInfo(result.data);
@@ -91,11 +125,12 @@ const Perfil = ({ navigation }) => {
         <View style={styles.perfilContainer}>
           <Image
             source={
-              user?.imagemPerfil
-                ? { uri: user.imagemPerfil }
+              imagemPerfil
+                ? { uri: imagemPerfil }
                 : require("../assets/images/logoPerfil.png")
             }
             style={styles.foto}
+            onError={() => setImagemPerfil(null)}
           />
 
           <View style={styles.infoContainer}>
@@ -200,15 +235,15 @@ const Perfil = ({ navigation }) => {
           </Text>
           <TouchableOpacity 
             style={styles.opcao}
-            onPress={() => setModalChatOpen(true)}
+            onPress={abrirWhatsApp}
           >
             <View style={styles.opcaoEsquerda}>
               <Ionicons
-                name="chatbubbles-outline"
+                name="logo-whatsapp"
                 size={22}
-                color="#000000ff"
+                color="#25D366"
               />
-              <Text style={styles.textoOpcao}>Conversar no chat</Text>
+              <Text style={styles.textoOpcao}>Conversar no WhatsApp</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#000000ff" />
           </TouchableOpacity>
@@ -221,13 +256,6 @@ const Perfil = ({ navigation }) => {
         <Text style={styles.textoSair}>Sair da conta</Text>
       </TouchableOpacity>
 
-      {/* Modal de Chat em Desenvolvimento */}
-      <ModalEmDesenvolvimento 
-        visible={modalChatOpen} 
-        onClose={() => setModalChatOpen(false)}
-        titulo="Chat de Suporte"
-        mensagem="Estamos trabalhando para trazer a você um sistema de chat completo para tirar suas dúvidas!"
-      />
     </View>
   );
 };

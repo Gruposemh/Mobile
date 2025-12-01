@@ -268,6 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     padding: 10,
     marginBottom: 20,
+    color: "#000000",
   },
   inputSenhaContainer: {
     flexDirection: "row",
@@ -284,6 +285,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingLeft: 10,
     paddingRight: 10,
+    color: "#000000",
   },
   botaoOlho: {
     paddingHorizontal: 12,
@@ -300,6 +302,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 10,
     marginBottom: 20,
+    color: "#000000",
   },
   botaoProximo: {
     backgroundColor: '#b20000',

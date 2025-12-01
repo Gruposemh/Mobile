@@ -262,6 +262,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
     fontFamily: 'NunitoSans-Light',
+    color: '#000000',
   },
   inputMultiline: {
     height: 80,

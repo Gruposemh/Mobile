@@ -1,68 +1,59 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { AppState } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
 /**
- * Hook para auto-refresh de dados
- * @param {Function} refreshFunction - Função que será chamada para atualizar os dados
- * @param {number} interval - Intervalo em milissegundos (padrão: 30 segundos)
- * @param {boolean} refreshOnFocus - Se deve atualizar ao focar na tela (padrão: true)
- * @param {boolean} refreshOnAppForeground - Se deve atualizar ao voltar para o app (padrão: true)
+ * Hook otimizado para auto-refresh de dados
  */
 export const useAutoRefresh = (
   refreshFunction,
-  interval = 30000, // 30 segundos
+  interval = 60000, // 60 segundos
   refreshOnFocus = true,
   refreshOnAppForeground = true
 ) => {
   const intervalRef = useRef(null);
   const appState = useRef(AppState.currentState);
+  const lastRefresh = useRef(0);
+
+  // Debounce para evitar múltiplas chamadas
+  const debouncedRefresh = useCallback(() => {
+    const now = Date.now();
+    if (now - lastRefresh.current > 5000) { // Mínimo 5s entre refreshes
+      lastRefresh.current = now;
+      refreshFunction();
+    }
+  }, [refreshFunction]);
 
   // Auto-refresh periódico
   useEffect(() => {
     if (interval > 0) {
-      intervalRef.current = setInterval(() => {
-        console.log('🔄 Auto-refresh: Atualizando dados...');
-        refreshFunction();
-      }, interval);
-
-      return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-        }
-      };
+      intervalRef.current = setInterval(debouncedRefresh, interval);
+      return () => clearInterval(intervalRef.current);
     }
-  }, [refreshFunction, interval]);
+  }, [debouncedRefresh, interval]);
 
   // Refresh ao focar na tela
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       if (refreshOnFocus) {
-        console.log('👁️ Tela focada: Atualizando dados...');
-        refreshFunction();
+        debouncedRefresh();
       }
-    }, [refreshFunction, refreshOnFocus])
+    }, [debouncedRefresh, refreshOnFocus])
   );
 
-  // Refresh ao voltar para o app (foreground)
+  // Refresh ao voltar para o app
   useEffect(() => {
     if (!refreshOnAppForeground) return;
 
     const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === 'active'
-      ) {
-        console.log('📱 App voltou ao foreground: Atualizando dados...');
-        refreshFunction();
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        debouncedRefresh();
       }
       appState.current = nextAppState;
     });
 
-    return () => {
-      subscription?.remove();
-    };
-  }, [refreshFunction, refreshOnAppForeground]);
+    return () => subscription?.remove();
+  }, [debouncedRefresh, refreshOnAppForeground]);
 };
 
 export default useAutoRefresh;

@@ -3,9 +3,6 @@ import * as AuthSession from 'expo-auth-session';
 import { Platform, Linking } from 'react-native';
 import { API_URL } from '../config/api.config';
 
-// Necessário para fechar o navegador após o login
-WebBrowser.maybeCompleteAuthSession();
-
 /**
  * Configuração do Google OAuth2 para mobile
  */

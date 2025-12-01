@@ -8,23 +8,29 @@ import {
   ScrollView,
 } from 'react-native';
 import MenuModal from "../components/Menu";
+import ModalEmDesenvolvimento from "../components/ModalEmDesenvolvimento";
 import { useAuth } from "../context/AuthContext"; 
+
 const SaibaMais = ({ navigation }) => { 
   const { isVoluntario } = useAuth();
   const [isModalVisible, setModalVisible] = useState(false);
-       const toggleModal = () => {
-      console.log(" Alternando menu. Visível?", !isModalVisible);
-      setModalVisible(!isModalVisible);
-    };
-    const handleDoacaoDinheiro = () => {
-    navigation.navigate("DoacaoDinheiro");
-      }; 
-      const handleDoacaoMateriais = () => {
-    navigation.navigate("DoacaoMateriais");
-    };
-      const handleEventos = () => {
+  const [modalDoacaoOpen, setModalDoacaoOpen] = useState(false);
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const handleDoacaoDinheiro = () => {
+    setModalDoacaoOpen(true);
+  }; 
+
+  const handleDoacaoMateriais = () => {
+    setModalDoacaoOpen(true);
+  };
+
+  const handleEventos = () => {
     navigation.navigate("VerMais");
-    };
+  };
 
 return (
     <ScrollView 
@@ -106,6 +112,7 @@ return (
                  </View>
       </View>
          <MenuModal visible={isModalVisible} onClose={toggleModal} />
+         <ModalEmDesenvolvimento visible={modalDoacaoOpen} onClose={() => setModalDoacaoOpen(false)} />
        </ScrollView>
        
 
@@ -139,7 +146,7 @@ const styles = StyleSheet.create({
 
  titulo:{
     fontSize: 20,
-
+    color: "#000000",
  },
 
  logo:{
@@ -169,6 +176,7 @@ const styles = StyleSheet.create({
     marginVertical: 30,
     lineHeight: 26,
     textAlign: 'justify',
+    color: "#000000",
   },
     doar: {
     marginVertical: 7, 

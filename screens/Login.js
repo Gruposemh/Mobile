@@ -266,6 +266,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     fontSize: 15,
     padding: 10,
+    color: "#000000",
   },
   inputSenhaContainer: {
     flexDirection: "row",
@@ -282,6 +283,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingLeft: 10,
     paddingRight: 10,
+    color: "#000000",
   },
   botaoOlho: {
     paddingHorizontal: 12,

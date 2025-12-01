@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     backgroundColor:"#f1f1f1",
     paddingLeft: 10,
     fontSize: 16,
-    color: '#333',
+    color: '#000000',
     bottom: 300,
   },
 

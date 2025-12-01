@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback, useMemo } from 'react';
 import { getAuthData, saveAuthData, clearAuthData } from '../utils/storage';
 
 const AuthContext = createContext({});
@@ -16,57 +16,54 @@ export const AuthProvider = ({ children }) => {
   const loadStorageData = async () => {
     try {
       const { user: storedUser, token: storedToken } = await getAuthData();
-      console.log('Dados carregados do storage:', { user: storedUser, hasToken: !!storedToken });
       if (storedUser && storedToken) {
         setUser(storedUser);
         setToken(storedToken);
       }
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      if (__DEV__) console.error('Erro ao carregar dados:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const signIn = async (authToken, refreshToken, userData) => {
-    console.log('SignIn chamado com:', { userData, hasToken: !!authToken });
+  const signIn = useCallback(async (authToken, refreshToken, userData) => {
     await saveAuthData(authToken, refreshToken, userData);
     setUser(userData);
     setToken(authToken);
-  };
+  }, []);
 
-  const signOut = async () => {
-    console.log('SignOut chamado');
+  const signOut = useCallback(async () => {
     await clearAuthData();
     setUser(null);
     setToken(null);
     setIsVoluntario(false);
-  };
+  }, []);
 
-  const updateVoluntarioStatus = (status) => {
+  const updateVoluntarioStatus = useCallback((status) => {
     setIsVoluntario(status);
-  };
+  }, []);
 
-  const updateUser = async (updatedUserData) => {
+  const updateUser = useCallback(async (updatedUserData) => {
     const { token: currentToken, refreshToken } = await getAuthData();
     await saveAuthData(currentToken, refreshToken, updatedUserData);
     setUser(updatedUserData);
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    signed: !!user && !!token,
+    user,
+    token,
+    loading,
+    isVoluntario,
+    signIn,
+    signOut,
+    updateVoluntarioStatus,
+    updateUser,
+  }), [user, token, loading, isVoluntario, signIn, signOut, updateVoluntarioStatus, updateUser]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        signed: !!user && !!token,
-        user,
-        token,
-        loading,
-        isVoluntario,
-        signIn,
-        signOut,
-        updateVoluntarioStatus,
-        updateUser,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

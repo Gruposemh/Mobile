@@ -1,13 +1,16 @@
 {
   "expo": {
-    "name": "mobileFront",
+    "name": "VoluntarioProBem",
     "slug": "mobileFront",
     "version": "1.0.0",
+    "sdkVersion": "54.0.0",
     "orientation": "portrait",
+    "icon": "./assets/images/logoOngCirculo.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "scheme": "voluntariosprobem",
     "splash": {
+      "image": "./assets/images/logoOng.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -16,13 +19,20 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logoOngAdaptive.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.iagob12.mobileFront"
     },
     "web": {},
     "plugins": [
-      "expo-web-browser"
-    ]
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "153e8da0-f206-488e-a1c3-96b2dbb9e528"
+      }
+    },
+    "owner": "iagob12"
   }
 }

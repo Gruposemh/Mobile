@@ -246,12 +246,14 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginLeft: 21,
     fontFamily: "NunitoSans-Light",
+    color: "#000000",
   },
   titleDois: {
     fontSize: 20,
     marginTop: 10,
     marginLeft: 21,
     fontFamily: "Raleway-Bold",
+    color: "#000000",
   },
   botaoAgenda: {
     backgroundColor: "#B20000",

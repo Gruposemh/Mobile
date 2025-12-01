@@ -214,6 +214,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     padding: 10,
     marginBottom: 20,
+    color: "#000000",
   },
   botaoProximo: {
     backgroundColor: '#b20000',
@@ -237,6 +238,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 10,
     marginBottom: 20,
+    color: "#000000",
   },
   textoCancelar: {
     fontSize: 16,

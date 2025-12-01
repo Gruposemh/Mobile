@@ -27,14 +27,71 @@ const CadastrarUsuario = ({ navigation }) => {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const { toast, showToast, hideToast } = useToast();
 
+  const validarSenha = (senha) => {
+    const erros = [];
+    
+    // Mínimo 8 caracteres
+    if (senha.length < 8) {
+      erros.push("mínimo 8 caracteres");
+    }
+    
+    // Letra maiúscula
+    if (!/[A-Z]/.test(senha)) {
+      erros.push("uma letra maiúscula");
+    }
+    
+    // Letra minúscula
+    if (!/[a-z]/.test(senha)) {
+      erros.push("uma letra minúscula");
+    }
+    
+    // Número
+    if (!/[0-9]/.test(senha)) {
+      erros.push("um número");
+    }
+    
+    // Caractere especial aceito
+    const especiaisAceitos = /[@!$%&*\-_+=]/;
+    const especiaisInvalidos = /[#^~`"'\\\/|<>,.?:;()\[\]{}]/;
+    
+    if (especiaisInvalidos.test(senha)) {
+      return { 
+        valida: false, 
+        mensagem: "Caractere especial inválido! Use apenas: @ ! $ % & * - _ + =" 
+      };
+    }
+    
+    if (!especiaisAceitos.test(senha)) {
+      erros.push("um caractere especial (@ ! $ % & * - _ + =)");
+    }
+    
+    if (erros.length > 0) {
+      if (erros.length === 1) {
+        return { valida: false, mensagem: `A senha precisa ter ${erros[0]}` };
+      }
+      return { 
+        valida: false, 
+        mensagem: `A senha precisa ter: ${erros.join(", ")}` 
+      };
+    }
+    
+    return { valida: true, mensagem: "" };
+  };
+
   const handleCriar = async () => {
     if (!nome || !email || !senha) {
       showToast("Preencha todos os campos", "error");
       return;
     }
 
-    if (senha.length < 6) {
-      showToast("A senha deve ter no mínimo 6 caracteres", "error");
+    if (!email.includes('@') || !email.includes('.')) {
+      showToast("Digite um email válido", "error");
+      return;
+    }
+
+    const validacao = validarSenha(senha);
+    if (!validacao.valida) {
+      showToast(validacao.mensagem, "error");
       return;
     }
 
@@ -48,7 +105,13 @@ const CadastrarUsuario = ({ navigation }) => {
         navigation.navigate("VerificarEmail", { email });
       }, 1000);
     } else {
-      showToast(result.message, "error");
+      let mensagem = result.message;
+      if (mensagem.toLowerCase().includes("senha") || mensagem.toLowerCase().includes("password")) {
+        mensagem = "Senha inválida. Ex: Exemplo@12";
+      } else if (mensagem.toLowerCase().includes("email") && mensagem.toLowerCase().includes("existe")) {
+        mensagem = "Este email já está cadastrado";
+      }
+      showToast(mensagem, "error");
     }
   };
 
@@ -64,28 +127,12 @@ const CadastrarUsuario = ({ navigation }) => {
     
     if (result.success) {
       const { token, refreshToken, email, role, id, nome } = result.data;
-      
-      console.log('Dados recebidos do Google:', { id, nome, email, role });
-      
-      const userData = {
-        id: id,
-        nome: nome,
-        email: email,
-        role: role,
-      };
-      
-      console.log('Salvando dados do usuário Google:', userData);
-      
+      const userData = { id, nome, email, role };
       await signIn(token, refreshToken, userData);
-      
-      console.log('Login com Google concluído');
       showToast("Cadastro realizado com sucesso!", "success");
       setLoading(false);
     } else if (result.waiting) {
-      console.log('⏳ Aguardando retorno do navegador...');
-      setTimeout(() => {
-        setLoading(false);
-      }, 3000);
+      setTimeout(() => setLoading(false), 3000);
     } else {
       setLoading(false);
       showToast(result.message || "Erro ao fazer login com Google", "error");
@@ -138,7 +185,7 @@ const CadastrarUsuario = ({ navigation }) => {
           <View style={estilos.inputSenhaContainer}>
             <TextInput
               style={estilos.inputSenha}
-              placeholder="Senha (mínimo 6 caracteres)"
+              placeholder="Senha (ex: Exemplo@12)"
               placeholderTextColor="#aaa"
               value={senha}
               onChangeText={setSenha}
@@ -200,7 +247,7 @@ export default CadastrarUsuario;
 const estilos = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff", // Branco forte igual ao login
+    backgroundColor: "#ffffff",
   },
   image: {
     position: "absolute",
@@ -226,6 +273,7 @@ const estilos = StyleSheet.create({
     fontSize: 50,
     fontFamily: "Raleway-Bold",
     flexShrink: 0,
+    color: "#000000",
   },
   input: {
     backgroundColor: "#f1f1f1",
@@ -235,6 +283,7 @@ const estilos = StyleSheet.create({
     borderRadius: 10,
     fontSize: 15,
     paddingHorizontal: 14,
+    color: "#000000",
   },
   inputSenhaContainer: {
     flexDirection: "row",
@@ -250,6 +299,7 @@ const estilos = StyleSheet.create({
     height: "100%",
     fontSize: 15,
     paddingHorizontal: 14,
+    color: "#000000",
   },
   botaoOlho: {
     paddingHorizontal: 12,

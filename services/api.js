@@ -4,7 +4,7 @@ import { API_URL } from '../config/api.config';
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000, // 30 segundos para operações que envolvem email
+  timeout: 15000, // Reduzido para 15 segundos
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,7 +13,9 @@ const api = axios.create({
 // Interceptor para adicionar token em todas as requisições
 api.interceptors.request.use(
   async (config) => {
-    console.log(`🌐 ${config.method.toUpperCase()} ${API_URL}${config.url}`);
+    if (__DEV__) {
+      console.log(`🌐 ${config.method.toUpperCase()} ${config.url}`);
+    }
     const token = await AsyncStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -21,19 +23,15 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('❌ Erro no request:', error);
+    if (__DEV__) console.error('❌ Erro no request:', error);
     return Promise.reject(error);
   }
 );
 
 // Interceptor para tratar erros
 api.interceptors.response.use(
-  (response) => {
-    console.log(`✅ Response ${response.status}:`, response.data);
-    return response;
-  },
+  (response) => response,
   async (error) => {
-    // Não logar erros 404 em /voluntario/usuario (é esperado quando usuário não é voluntário)
     const isVoluntarioCheck = error.config?.url?.includes('/voluntario/usuario/');
     const is404 = error.response?.status === 404;
     
@@ -44,23 +42,14 @@ api.interceptors.response.use(
       } else if (error.message === 'Network Error') {
         error.message = 'Erro de conexão. Verifique sua internet.';
       }
-      console.error('❌ Network Error:', error.message);
       return Promise.reject(error);
     }
     
-    // Só logar se não for um 404 esperado
-    if (!(is404 && isVoluntarioCheck)) {
-      console.error(`❌ Response Error ${error.response.status} em ${error.config?.url}:`, error.response.data);
-    }
-    
-    // Tratamento de erros específicos
     const status = error.response.status;
     
     switch (status) {
       case 401:
-        // Token expirado - fazer logout
-        await AsyncStorage.removeItem('token');
-        await AsyncStorage.removeItem('user');
+        await AsyncStorage.multiRemove(['token', 'user', 'refreshToken']);
         error.message = 'Sessão expirada. Faça login novamente.';
         break;
       case 403:

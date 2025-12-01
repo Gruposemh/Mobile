@@ -146,6 +146,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 8,
     fontFamily: "NunitoSans-Light",
+    color: "#000000",
   },
   botao: {
     backgroundColor: "#b20000",

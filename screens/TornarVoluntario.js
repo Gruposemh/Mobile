@@ -215,6 +215,7 @@ const TornarVoluntario = ({ navigation }) => {
           <TextInput
             style={styles.input}
             placeholder="CPF (000.000.000-00)"
+            placeholderTextColor="#aaa"
             value={cpf}
             onChangeText={handleCpfChange}
             keyboardType="numeric"
@@ -224,6 +225,7 @@ const TornarVoluntario = ({ navigation }) => {
           <TextInput
             style={styles.input}
             placeholder="Telefone (00) 00000-0000"
+            placeholderTextColor="#aaa"
             value={telefone}
             onChangeText={handleTelefoneChange}
             keyboardType="phone-pad"
@@ -233,6 +235,7 @@ const TornarVoluntario = ({ navigation }) => {
           <TextInput
             style={styles.input}
             placeholder="Data de Nascimento (DD/MM/AAAA)"
+            placeholderTextColor="#aaa"
             value={dataNascimento}
             onChangeText={handleDataChange}
             keyboardType="numeric"
@@ -242,6 +245,7 @@ const TornarVoluntario = ({ navigation }) => {
           <TextInput
             style={styles.input}
             placeholder="Endereço"
+            placeholderTextColor="#aaa"
             value={endereco}
             onChangeText={setEndereco}
           />
@@ -249,6 +253,7 @@ const TornarVoluntario = ({ navigation }) => {
           <TextInput
             style={[styles.input, styles.inputDescricao]}
             placeholder="Por que deseja ser voluntário?"
+            placeholderTextColor="#aaa"
             value={descricao}
             onChangeText={setDescricao}
             multiline
@@ -313,6 +318,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     fontSize: 15,
     padding: 14,
+    color: "#000000",
   },
   inputDescricao: {
     height: 100,

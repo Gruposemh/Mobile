@@ -67,7 +67,7 @@ const EventoModal = ({ visible, evento, onClose, onInscrever, isVoluntario }) =>
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.textoBotao}>Confirmar Presença</Text>
+                  <Text style={styles.textoBotao}>Inscrever-me</Text>
                 )}
               </TouchableOpacity>
             )}
@@ -113,17 +113,20 @@ const styles = StyleSheet.create({
     fontFamily: "Raleway-Bold",
     marginBottom: 15,
     textAlign: "center",
+    color: "#000000",
   },
   label: {
     fontSize: 14,
     fontFamily: "Raleway-Bold",
     marginTop: 10,
     marginBottom: 3,
+    color: "#000000",
   },
   texto: {
     fontSize: 14,
     fontFamily: "NunitoSans-Light",
     lineHeight: 20,
+    color: "#000000",
   },
   botaoInscrever: {
     backgroundColor: "#b20000",

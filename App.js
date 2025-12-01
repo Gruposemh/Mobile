@@ -1,124 +1,178 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback, memo, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useFonts } from "expo-font";
-import { ActivityIndicator, View, Linking, Image } from "react-native";
-import { Asset } from 'expo-asset';
+import { ActivityIndicator, View, Linking, LogBox, Image, Text, StyleSheet } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import * as WebBrowser from 'expo-web-browser';
-import ErrorBoundary from "./components/ErrorBoundary";
 
-import TelaInicio from "./screens/TelaInicio";
-import TelaInicioDois from "./screens/TelaInicioDois";
-import CadastrarUsuario from "./screens/CadastrarUsuario";
-import VerificarEmail from "./screens/VerificarEmail";
-import Login from "./screens/Login";
-import RecuperacaoSenha from "./screens/RecuperacaoSenha";
-import TelaSMS from "./screens/TelaSMS";
-import TelaEmail from "./screens/TelaEmail";
-import Home from "./screens/Home";
-import SaibaMais from "./screens/SaibaMais";
-import VerMais from "./screens/VerMais";
-import DoacaoDinheiro from "./screens/DoacaoDinheiro";
-import DoacaoMateriais from "./screens/DoacaoMateriais";
-import Perfil from "./screens/Perfil";
-import EditarPerfil from "./screens/EditarPerfil";
-import Notificacoes from "./screens/Notificacoes";
-import Informacoes from "./screens/Informacoes";
-import MinhaAgenda from "./screens/MinhaAgenda";
-import TornarVoluntario from "./screens/TornarVoluntario";
-import CancelarVoluntariado from "./screens/CancelarVoluntariado";
-import Atividades from "./screens/Atividades";
+// Ignorar logs desnecessários em produção
+LogBox.ignoreLogs([
+  'Non-serializable values were found in the navigation state',
+  'Require cycle:',
+]);
+
+// Lazy loading das telas para melhor performance
+const TelaInicio = React.lazy(() => import("./screens/TelaInicio"));
+const TelaInicioDois = React.lazy(() => import("./screens/TelaInicioDois"));
+const CadastrarUsuario = React.lazy(() => import("./screens/CadastrarUsuario"));
+const VerificarEmail = React.lazy(() => import("./screens/VerificarEmail"));
+const Login = React.lazy(() => import("./screens/Login"));
+const RecuperacaoSenha = React.lazy(() => import("./screens/RecuperacaoSenha"));
+const TelaSMS = React.lazy(() => import("./screens/TelaSMS"));
+const TelaEmail = React.lazy(() => import("./screens/TelaEmail"));
+const Home = React.lazy(() => import("./screens/Home"));
+const SaibaMais = React.lazy(() => import("./screens/SaibaMais"));
+const VerMais = React.lazy(() => import("./screens/VerMais"));
+const DoacaoDinheiro = React.lazy(() => import("./screens/DoacaoDinheiro"));
+const DoacaoMateriais = React.lazy(() => import("./screens/DoacaoMateriais"));
+const Perfil = React.lazy(() => import("./screens/Perfil"));
+const EditarPerfil = React.lazy(() => import("./screens/EditarPerfil"));
+const Notificacoes = React.lazy(() => import("./screens/Notificacoes"));
+const Informacoes = React.lazy(() => import("./screens/Informacoes"));
+const MinhaAgenda = React.lazy(() => import("./screens/MinhaAgenda"));
+const TornarVoluntario = React.lazy(() => import("./screens/TornarVoluntario"));
+const CancelarVoluntariado = React.lazy(() => import("./screens/CancelarVoluntariado"));
+const Atividades = React.lazy(() => import("./screens/Atividades"));
 
 const Pilha = createNativeStackNavigator();
+
+// Tela de Splash/Loading com logo centralizada
+const SplashScreen = memo(() => (
+  <View style={splashStyles.container}>
+    <View style={splashStyles.conteudo}>
+      <Image
+        source={require('./assets/images/logoOng.png')}
+        style={splashStyles.logo}
+        resizeMode="contain"
+      />
+      <Text style={splashStyles.texto}>Voluntários</Text>
+    </View>
+  </View>
+));
+
+const splashStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  conteudo: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 124,
+    height: 125,
+    marginBottom: 10,
+  },
+  texto: {
+    fontSize: 46,
+    fontFamily: 'Raleway-Bold',
+    textAlign: 'center',
+    color: '#000000',
+  },
+});
+
+// Componente de loading para Suspense (usa o mesmo visual da splash)
+const LoadingFallback = memo(() => (
+  <View style={splashStyles.container}>
+    <View style={splashStyles.conteudo}>
+      <Image
+        source={require('./assets/images/logoOng.png')}
+        style={splashStyles.logo}
+        resizeMode="contain"
+      />
+      <Text style={splashStyles.texto}>Voluntários</Text>
+    </View>
+  </View>
+));
+
+// Wrapper para telas com Suspense
+const withSuspense = (Component) => {
+  return memo((props) => (
+    <React.Suspense fallback={<LoadingFallback />}>
+      <Component {...props} />
+    </React.Suspense>
+  ));
+};
+
+// Telas com Suspense
+const TelaInicioScreen = withSuspense(TelaInicio);
+const TelaInicioDoisScreen = withSuspense(TelaInicioDois);
+const CadastrarUsuarioScreen = withSuspense(CadastrarUsuario);
+const VerificarEmailScreen = withSuspense(VerificarEmail);
+const LoginScreen = withSuspense(Login);
+const RecuperacaoSenhaScreen = withSuspense(RecuperacaoSenha);
+const TelaSMSScreen = withSuspense(TelaSMS);
+const TelaEmailScreen = withSuspense(TelaEmail);
+const HomeScreen = withSuspense(Home);
+const SaibaMaisScreen = withSuspense(SaibaMais);
+const VerMaisScreen = withSuspense(VerMais);
+const DoacaoDinheiroScreen = withSuspense(DoacaoDinheiro);
+const DoacaoMateriaisScreen = withSuspense(DoacaoMateriais);
+const PerfilScreen = withSuspense(Perfil);
+const EditarPerfilScreen = withSuspense(EditarPerfil);
+const NotificacoesScreen = withSuspense(Notificacoes);
+const InformacoesScreen = withSuspense(Informacoes);
+const MinhaAgendaScreen = withSuspense(MinhaAgenda);
+const TornarVoluntarioScreen = withSuspense(TornarVoluntario);
+const CancelarVoluntariadoScreen = withSuspense(CancelarVoluntariado);
+const AtividadesScreen = withSuspense(Atividades);
 
 function AppNavigator() {
   const { signed, loading, signIn } = useAuth();
 
-  // Configurar listener para deep links do OAuth2
-  useEffect(() => {
-    // Fechar qualquer sessão de autenticação pendente
-    WebBrowser.maybeCompleteAuthSession();
+  const handleDeepLink = useCallback(async (event) => {
+    const url = event?.url;
+    if (!url || !url.includes('oauth2/callback')) return;
 
-    // Listener para deep links
-    const handleDeepLink = async (event) => {
-      const url = event.url;
-      console.log('🔗 Deep link recebido:', url);
+    try {
+      const params = new URLSearchParams(url.split('?')[1]);
+      const token = params.get('token');
+      const refreshToken = params.get('refreshToken');
+      const email = params.get('email');
+      const role = params.get('role');
+      const id = params.get('id');
+      const nome = params.get('nome');
 
-      // Verificar se é callback do OAuth2
-      if (url.includes('oauth2/callback')) {
-        try {
-          // Extrair parâmetros da URL
-          const params = new URLSearchParams(url.split('?')[1]);
-          
-          const token = params.get('token');
-          const refreshToken = params.get('refreshToken');
-          const email = params.get('email');
-          const role = params.get('role');
-          const id = params.get('id');
-          const nome = params.get('nome');
-
-          console.log('📦 Dados recebidos do OAuth2:', { 
-            token: token?.substring(0, 20) + '...', 
-            email, 
-            role, 
-            id, 
-            nome: nome ? decodeURIComponent(nome) : 'N/A'
-          });
-
-          if (token && refreshToken && email) {
-            const userData = {
-              id: parseInt(id),
-              nome: nome ? decodeURIComponent(nome) : email.split('@')[0],
-              email: email,
-              role: role,
-            };
-
-            console.log('✅ Fazendo login com dados do Google...');
-            
-            // Fechar o navegador se ainda estiver aberto
-            WebBrowser.dismissBrowser();
-            
-            await signIn(token, refreshToken, userData);
-            console.log('✅ Login com Google concluído!');
-          } else {
-            console.error('❌ Dados incompletos no deep link');
-            console.error('Token:', !!token, 'RefreshToken:', !!refreshToken, 'Email:', !!email);
-          }
-        } catch (error) {
-          console.error('❌ Erro ao processar deep link:', error);
-        }
+      if (token && refreshToken && email) {
+        const userData = {
+          id: parseInt(id),
+          nome: nome ? decodeURIComponent(nome) : email.split('@')[0],
+          email,
+          role,
+        };
+        WebBrowser.dismissBrowser();
+        await signIn(token, refreshToken, userData);
       }
-    };
-
-    // Verificar se o app foi aberto via deep link
-    Linking.getInitialURL().then((url) => {
-      if (url) {
-        console.log('🔗 App aberto via deep link:', url);
-        handleDeepLink({ url });
-      }
-    });
-
-    // Adicionar listener para deep links enquanto o app está aberto
-    const subscription = Linking.addEventListener('url', handleDeepLink);
-
-    return () => {
-      subscription.remove();
-    };
+    } catch (error) {
+      console.error('Erro ao processar deep link:', error);
+    }
   }, [signIn]);
 
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink({ url });
+    });
+
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    return () => subscription.remove();
+  }, [handleDeepLink]);
+
+  // Mostra a splash enquanto carrega autenticação
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
-        <ActivityIndicator size="large" color="#b20000" />
-      </View>
-    );
+    return <SplashScreen />;
   }
 
   return (
     <NavigationContainer
       linking={{
-        prefixes: ['voluntariosprobem://', 'exp://'],
+        prefixes: ['voluntariosprobem://'],
         config: {
           screens: {
             Home: 'home',
@@ -129,36 +183,38 @@ function AppNavigator() {
     >
       <Pilha.Navigator
         initialRouteName={signed ? "Home" : "Inicio"}
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ 
+          headerShown: false,
+          animation: 'fade',
+          animationDuration: 200,
+        }}
       >
         {!signed ? (
-          // Telas públicas (não autenticadas)
           <>
-            <Pilha.Screen name="Inicio" component={TelaInicio} />
-            <Pilha.Screen name="InicioDois" component={TelaInicioDois} />
-            <Pilha.Screen name="CadastrarUsuario" component={CadastrarUsuario} />
-            <Pilha.Screen name="VerificarEmail" component={VerificarEmail} />
-            <Pilha.Screen name="Login" component={Login} />
-            <Pilha.Screen name="RecuperacaoSenha" component={RecuperacaoSenha} />
-            <Pilha.Screen name="TelaSMS" component={TelaSMS} />
-            <Pilha.Screen name="TelaEmail" component={TelaEmail} />
+            <Pilha.Screen name="Inicio" component={TelaInicioScreen} />
+            <Pilha.Screen name="InicioDois" component={TelaInicioDoisScreen} />
+            <Pilha.Screen name="CadastrarUsuario" component={CadastrarUsuarioScreen} />
+            <Pilha.Screen name="VerificarEmail" component={VerificarEmailScreen} />
+            <Pilha.Screen name="Login" component={LoginScreen} />
+            <Pilha.Screen name="RecuperacaoSenha" component={RecuperacaoSenhaScreen} />
+            <Pilha.Screen name="TelaSMS" component={TelaSMSScreen} />
+            <Pilha.Screen name="TelaEmail" component={TelaEmailScreen} />
           </>
         ) : (
-          // Telas privadas (autenticadas)
           <>
-            <Pilha.Screen name="Home" component={Home} />
-            <Pilha.Screen name="SaibaMais" component={SaibaMais} />
-            <Pilha.Screen name="VerMais" component={VerMais} />
-            <Pilha.Screen name="DoacaoDinheiro" component={DoacaoDinheiro} />
-            <Pilha.Screen name="DoacaoMateriais" component={DoacaoMateriais} />
-            <Pilha.Screen name="Perfil" component={Perfil} />
-            <Pilha.Screen name="EditarPerfil" component={EditarPerfil} />
-            <Pilha.Screen name="Notificacoes" component={Notificacoes} />
-            <Pilha.Screen name="Informacoes" component={Informacoes} />
-            <Pilha.Screen name="MinhaAgenda" component={MinhaAgenda} />
-            <Pilha.Screen name="TornarVoluntario" component={TornarVoluntario} />
-            <Pilha.Screen name="CancelarVoluntariado" component={CancelarVoluntariado} />
-            <Pilha.Screen name="Atividades" component={Atividades} />
+            <Pilha.Screen name="Home" component={HomeScreen} />
+            <Pilha.Screen name="SaibaMais" component={SaibaMaisScreen} />
+            <Pilha.Screen name="VerMais" component={VerMaisScreen} />
+            <Pilha.Screen name="DoacaoDinheiro" component={DoacaoDinheiroScreen} />
+            <Pilha.Screen name="DoacaoMateriais" component={DoacaoMateriaisScreen} />
+            <Pilha.Screen name="Perfil" component={PerfilScreen} />
+            <Pilha.Screen name="EditarPerfil" component={EditarPerfilScreen} />
+            <Pilha.Screen name="Notificacoes" component={NotificacoesScreen} />
+            <Pilha.Screen name="Informacoes" component={InformacoesScreen} />
+            <Pilha.Screen name="MinhaAgenda" component={MinhaAgendaScreen} />
+            <Pilha.Screen name="TornarVoluntario" component={TornarVoluntarioScreen} />
+            <Pilha.Screen name="CancelarVoluntariado" component={CancelarVoluntariadoScreen} />
+            <Pilha.Screen name="Atividades" component={AtividadesScreen} />
           </>
         )}
       </Pilha.Navigator>
@@ -166,61 +222,33 @@ function AppNavigator() {
   );
 }
 
-// Preload de imagens críticas
-const cacheImages = (images) => {
-  return images.map(image => {
-    if (typeof image === 'string') {
-      return Image.prefetch(image);
-    } else {
-      return Asset.fromModule(image).downloadAsync();
-    }
-  });
-};
-
 export default function App() {
-  const [appReady, setAppReady] = React.useState(false);
-  
   const [fontsLoaded] = useFonts({
     "Raleway-Bold": require("./assets/fonts/Raleway-Bold.ttf"),
     "NunitoSans-Light": require("./assets/fonts/NunitoLight-K7dKW.ttf"),
   });
 
-  useEffect(() => {
-    async function loadResourcesAndDataAsync() {
-      try {
-        // Preload de imagens críticas
-        const imageAssets = cacheImages([
-          require('./assets/images/fundo1.png'),
-          require('./assets/images/fundo2.png'),
-          require('./assets/images/logoOng.png'),
-        ]);
-
-        await Promise.all([...imageAssets]);
-      } catch (e) {
-        console.warn('Erro ao carregar recursos:', e);
-      } finally {
-        setAppReady(true);
-      }
-    }
-
-    if (fontsLoaded) {
-      loadResourcesAndDataAsync();
-    }
-  }, [fontsLoaded]);
-
-  if (!fontsLoaded || !appReady) {
+  // Mostra splash enquanto fontes carregam
+  if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}>
-        <ActivityIndicator size="large" color="#b20000" />
+      <View style={splashStyles.container}>
+        <View style={splashStyles.conteudo}>
+          <Image
+            source={require('./assets/images/logoOng.png')}
+            style={splashStyles.logo}
+            resizeMode="contain"
+          />
+          <ActivityIndicator size="small" color="#b20000" style={{ marginTop: 20 }} />
+        </View>
       </View>
     );
   }
 
   return (
-    <ErrorBoundary>
+    <SafeAreaProvider>
       <AuthProvider>
         <AppNavigator />
       </AuthProvider>
-    </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
